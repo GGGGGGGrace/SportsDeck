@@ -6,8 +6,11 @@ export async function GET() {
     const threads = await prisma.thread.findMany({
       include: {
         author: true,
-        posts: true,
-        tags: true,
+        posts: {
+          include: {
+            replies: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
