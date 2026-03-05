@@ -345,6 +345,7 @@ function formatScore(match: FdMatch): string | null {
   return null;
 }
 
+// create a discussion thread when a new match is added to the database (if it doesn't already exist)
 async function syncMatchesToDb(matches: FdMatch[]): Promise<void> {
   for (const m of matches) {
     try {
