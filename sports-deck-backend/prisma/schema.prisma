@@ -41,7 +41,7 @@ model Match {
   venue         String?
   stage         String?
   group         String?
-  updatedAt     DateTime @updatedAt @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
 
   threads Thread[]
 }
@@ -53,14 +53,14 @@ model Team {
   tla       String?
   crest     String?
   venue     String?
-  updatedAt DateTime @updatedAt @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model ApiCache {
   key       String   @id
   data      String
   expiresAt DateTime
-  updatedAt DateTime @updatedAt @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Thread {
@@ -77,6 +77,7 @@ model Thread {
 
   posts Post[]
   tags  ThreadTag[]
+  polls Poll[]
 }
 
 model Post {
@@ -122,4 +123,31 @@ model ThreadTag {
   tag    Tag    @relation(fields: [tagId], references: [id])
 
   @@id([threadId, tagId])
+}
+
+model Poll {
+  id       Int      @id @default(autoincrement())
+  threadId Int
+  question String
+  deadline DateTime
+
+  thread  Thread       @relation(fields: [threadId], references: [id])
+  options PollOption[]
+}
+
+model PollOption {
+  id     Int    @id @default(autoincrement())
+  pollId Int
+  text   String
+
+  poll  Poll       @relation(fields: [pollId], references: [id])
+  votes PollVote[]
+}
+
+model PollVote {
+  id       Int    @id @default(autoincrement())
+  optionId Int
+  userId   String
+
+  option PollOption @relation(fields: [optionId], references: [id])
 }
