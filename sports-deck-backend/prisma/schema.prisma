@@ -26,15 +26,41 @@ model User {
 }
 
 model Match {
-  id         String   @id @default(cuid())
-  externalId Int      @unique
-  homeTeam   String
-  awayTeam   String
-  score      String?
-  status     String
-  matchDate  DateTime
+  id            String   @id @default(cuid())
+  externalId    Int      @unique
+  homeTeam      String
+  awayTeam      String
+  homeTeamCrest String?
+  awayTeamCrest String?
+  homeScore     Int?
+  awayScore     Int?
+  score         String?
+  status        String
+  matchday      Int      @default(0)
+  matchDate     DateTime
+  venue         String?
+  stage         String?
+  group         String?
+  updatedAt     DateTime @updatedAt @default(now())
 
   threads Thread[]
+}
+
+model Team {
+  id        Int      @id
+  name      String
+  shortName String?
+  tla       String?
+  crest     String?
+  venue     String?
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model ApiCache {
+  key       String   @id
+  data      String
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt @default(now())
 }
 
 model Thread {
