@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 export interface TokenPayload {
   userId: string;
   email: string;
-  username: string;
+  username?: string | null;
   role: string;
 }
 
