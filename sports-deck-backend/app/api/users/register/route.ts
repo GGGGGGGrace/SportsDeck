@@ -10,11 +10,11 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, username } = body;
+    const { email, password } = body;
 
-    if (!email || !password || !username) {
+    if (!email || !password) {
       return NextResponse.json(
-        { error: "Email, username, and password are required" },
+        { error: "Email and password are required" },
         { status: 400 }
       );
     }
@@ -39,24 +39,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if username already exists
-    const existingUsername = await prisma.user.findUnique({
-      where: { username },
-    });
-    if (existingUsername) {
-      return NextResponse.json(
-        { error: "Username already taken" },
-        { status: 409 }
-      );
-    }
-
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const user = await prisma.user.create({
       data: {
         email,
-        username,
         password: hashedPassword,
         role: "USER",
       },
@@ -66,7 +54,6 @@ export async function POST(request: NextRequest) {
     const tokenPayload: TokenPayload = {
       userId: user.id,
       email: user.email,
-      username: user.username,
       role: user.role,
     };
 

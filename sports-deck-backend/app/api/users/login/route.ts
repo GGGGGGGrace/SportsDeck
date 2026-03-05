@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const tokenPayload: TokenPayload = {
       userId: user.id,
       email: user.email,
-      username: user.username,
+      username: user.username ?? undefined,
       role: user.role,
     };
 
