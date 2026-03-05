@@ -295,40 +295,20 @@ export async function getMatches(filters?: {
 
 /**
  * Get a single match by its football-data.org ID.
- *
- * Strategy: cache → local DB → fetch all competition matches → 404
- * (Free-tier key cannot call GET /v4/matches/{id} directly.)
  */
 export async function getMatch(matchId: number): Promise<FdMatch> {
   const cacheKey = `match:${matchId}`;
 
-  // 1. Check per-match cache first
+  // Check per-match cache first
   const cached = await getCached<FdMatch>(cacheKey);
   if (cached) return cached;
 
-  // 2. Check local DB (matches synced from previous list fetches)
-  const dbMatch = await prisma.match.findUnique({
-    where: { externalId: matchId },
-  });
-
-  if (dbMatch) {
-    const reconstructed = dbMatchToFdMatch(dbMatch);
-    const terminalStatuses = ["FINISHED", "CANCELLED", "AWARDED"];
-    const ttl = terminalStatuses.includes(reconstructed.status)
-      ? CACHE_TTL.IMMUTABLE
-      : CACHE_TTL.SEMI_STATIC;
-    await setCache(cacheKey, reconstructed, ttl);
-    return reconstructed;
-  }
-
-  // 3. Fetch all competition matches and search (free-tier safe endpoint)
+  // Fetch all matches for the competition (this endpoint is free-tier safe)
   const allMatches = await getMatches();
   const match = allMatches.matches.find((m) => m.id === matchId);
 
   if (!match) {
-    const err: any = new Error(
-      `Match with ID ${matchId} not found in the current Premier League season`
-    );
+    const err: any = new Error("Match not found");
     err.response = { status: 404 };
     throw err;
   }
@@ -342,51 +322,6 @@ export async function getMatch(matchId: number): Promise<FdMatch> {
   await setCache(cacheKey, match, ttl);
 
   return match;
-}
-
-/** Reconstruct an FdMatch-shaped object from a local DB record. */
-function dbMatchToFdMatch(db: {
-  externalId: number;
-  homeTeam: string;
-  awayTeam: string;
-  homeTeamCrest: string | null;
-  awayTeamCrest: string | null;
-  homeScore: number | null;
-  awayScore: number | null;
-  status: string;
-  matchday: number;
-  matchDate: Date;
-  venue: string | null;
-  stage: string | null;
-  group: string | null;
-}): FdMatch {
-  return {
-    id: db.externalId,
-    matchday: db.matchday,
-    stage: db.stage ?? "REGULAR_SEASON",
-    group: db.group,
-    utcDate: db.matchDate.toISOString(),
-    status: db.status,
-    venue: db.venue ?? undefined,
-    homeTeam: {
-      id: 0,
-      name: db.homeTeam,
-      shortName: db.homeTeam,
-      tla: "",
-      crest: db.homeTeamCrest ?? "",
-    },
-    awayTeam: {
-      id: 0,
-      name: db.awayTeam,
-      shortName: db.awayTeam,
-      tla: "",
-      crest: db.awayTeamCrest ?? "",
-    },
-    score: {
-      fullTime: { home: db.homeScore, away: db.awayScore },
-      halfTime: { home: null, away: null },
-    },
-  };
 }
 
 /**
