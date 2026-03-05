@@ -1,0 +1,61 @@
+# ==============================
+# Node dependencies
+# ==============================
+sports-deck-backend/node_modules/
+/node_modules/
+
+# ==============================
+# Next.js build files
+# ==============================
+sports-deck-backend/.next/
+sports-deck-backend/out/
+sports-deck-backend/build/
+
+# ==============================
+# Coverage / testing
+# ==============================
+sports-deck-backend/coverage/
+
+# ==============================
+# Prisma / SQLite
+# ==============================
+*.db
+*.db-journal
+
+# ==============================
+# Environment variables
+# NOTE: your assignment says .env must be submitted
+# so comment this out if required by the prof
+# ==============================
+# .env*
+# sports-deck-backend/.env*
+
+# ==============================
+# Logs
+# ==============================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==============================
+# OS files
+# ==============================
+.DS_Store
+Thumbs.db
+
+# ==============================
+# IDE
+# ==============================
+.vscode/
+.idea/
+
+# ==============================
+# TypeScript build info
+# ==============================
+*.tsbuildinfo
+
+# ==============================
+# Generated Prisma files
+# ==============================
+sports-deck-backend/app/generated/prisma

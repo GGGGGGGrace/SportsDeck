@@ -22,6 +22,7 @@ model User {
 
   threads Thread[]
   posts   Post[]
+  replies Reply[]
 }
 
 model Match {
@@ -37,27 +38,62 @@ model Match {
 }
 
 model Thread {
-  id        String   @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   title     String
+  authorId  String
+  teamId    Int?
+  matchId   String?
+  match     Match?   @relation(fields: [matchId], references: [id])
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  authorId String
-  author   User   @relation(fields: [authorId], references: [id])
-
-  matchId String?
-  match   Match?  @relation(fields: [matchId], references: [id])
+  author User @relation(fields: [authorId], references: [id])
 
   posts Post[]
+  tags  ThreadTag[]
 }
 
 model Post {
-  id        String   @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   content   String
+  threadId  Int
+  authorId  String
+  version   Int      @default(1)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  authorId String
-  author   User   @relation(fields: [authorId], references: [id])
+  thread Thread @relation(fields: [threadId], references: [id])
+  author User   @relation(fields: [authorId], references: [id])
 
-  threadId String
-  thread   Thread @relation(fields: [threadId], references: [id])
+  replies Reply[]
+}
+
+model Reply {
+  id        Int      @id @default(autoincrement())
+  content   String
+  postId    Int
+  authorId  String
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post   Post @relation(fields: [postId], references: [id])
+  author User @relation(fields: [authorId], references: [id])
+}
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  threads ThreadTag[]
+}
+
+model ThreadTag {
+  threadId Int
+  tagId    Int
+
+  thread Thread @relation(fields: [threadId], references: [id])
+  tag    Tag    @relation(fields: [tagId], references: [id])
+
+  @@id([threadId, tagId])
 }

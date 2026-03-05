@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@prisma/client": "^7.4.2",
+    "axios": "^1.13.6",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.3.1",
+    "jsonwebtoken": "^9.0.3"
+  }
+}
