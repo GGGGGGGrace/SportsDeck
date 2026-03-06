@@ -4,11 +4,6 @@ import { getMatches, formatMatchResponse } from "@/app/lib/footballApi";
 /**
  * GET /api/matches
  *
- * Query params:
- *   - matchday: number — filter by matchday
- *   - status: string — filter by status (SCHEDULED, TIMED, FINISHED, POSTPONED, SUSPENDED, CANCELLED, AWARDED)
- *   - dateFrom: string (YYYY-MM-DD) — filter matches from this date
- *   - dateTo: string (YYYY-MM-DD) — filter matches until this date
  */
 export async function GET(request: NextRequest) {
   try {
@@ -50,23 +45,27 @@ export async function GET(request: NextRequest) {
       filters.status = upper;
     }
 
-    if (dateFrom) {
+    if ((dateFrom && !dateTo) || (!dateFrom && dateTo)) {
+      return NextResponse.json(
+        { error: "Invalid date range" },
+        { status: 400 }
+      );
+    }
+
+    if (dateFrom && dateTo) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateFrom)) {
         return NextResponse.json(
           { error: "dateFrom must be in YYYY-MM-DD format" },
           { status: 400 }
         );
       }
-      filters.dateFrom = dateFrom;
-    }
-
-    if (dateTo) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateTo)) {
         return NextResponse.json(
           { error: "dateTo must be in YYYY-MM-DD format" },
           { status: 400 }
         );
       }
+      filters.dateFrom = dateFrom;
       filters.dateTo = dateTo;
     }
 
