@@ -26,12 +26,13 @@ export async function PATCH(
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const thread = await prisma.thread.findUnique({
       where: {
-        id: Number(params.id),
+        id: Number(id),
       },
       include: {
         author: true,

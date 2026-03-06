@@ -345,8 +345,14 @@ function formatScore(match: FdMatch): string | null {
   return null;
 }
 
-// create a discussion thread when a new match is added to the database (if it doesn't already exist)
 async function syncMatchesToDb(matches: FdMatch[]): Promise<void> {
+  const adminUser = await prisma.user.findUnique({
+    where: { username: "defaultadmin" }
+  });
+
+  const now = new Date();
+  const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+
   for (const m of matches) {
     try {
       const match = await prisma.match.upsert({
@@ -383,49 +389,28 @@ async function syncMatchesToDb(matches: FdMatch[]): Promise<void> {
           group: m.group ?? null,
         },
       });
+      
+      const matchDate = new Date(m.utcDate);
 
-      // Auto-create a discussion thread for this match (idempotent)
-      await ensureMatchThread(match.id, m);
+      if (matchDate >= now && matchDate <= twoWeeksLater && adminUser) {
+        const existingThread = await prisma.thread.findFirst({
+          where: { matchId: match.id }
+        });
+
+        if (!existingThread) {
+          await prisma.thread.create({
+            data: {
+              title: `${m.homeTeam.name} vs ${m.awayTeam.name}`,
+              matchId: match.id,
+              authorId: adminUser.id,
+            }
+          });
+        }
+      }
+
     } catch (e) {
-      console.error(`Failed to sync match ${m.id}:`, e);
+      console.error("Failed to sync match");
     }
-  }
-}
-
-
-async function ensureMatchThread(matchId: string, m: FdMatch): Promise<void> {
-  try {
-    const existingThread = await prisma.thread.findFirst({
-      where: { matchId },
-    });
-    if (existingThread) return;
-
-    const defaultAdmin = await prisma.user.findUnique({
-      where: { email: process.env.ADMIN_EMAIL},
-    });
-    if (!defaultAdmin) {
-      console.warn(
-        "Default admin user not found"
-      );
-      return;
-    }
-
-    const score = formatScore(m);
-    const title = score
-      ? `${m.homeTeam.name} ${score} ${m.awayTeam.name} — Match Discussion`
-      : `${m.homeTeam.name} vs ${m.awayTeam.name} — Match Discussion`;
-
-    await prisma.thread.create({
-      data: {
-        title,
-        matchId,
-        authorId: defaultAdmin.id,
-      },
-    });
-
-    console.log(`Thread for match ${m.id}: ${title} created`);
-  } catch (e) {
-    console.error(`Failed to create thread for match ${m.id}:`, e);
   }
 }
 

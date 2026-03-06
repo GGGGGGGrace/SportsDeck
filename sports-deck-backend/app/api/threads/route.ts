@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { authenticate } from "@/app/lib/auth";
 
 export async function GET() {
   try {
@@ -24,17 +25,34 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    // Authenticate: use userId from JWT token
+    const authResult = authenticate(req);
+    if (authResult instanceof NextResponse) return authResult;
+    const authorId = authResult.userId;
+
     const body = await req.json();
+    const { title, content, matchId, tags } = body;
 
-    const { title, content, authorId, matchId, tags } = body;
-
-    if (!title || !content || !authorId) {
+    if (!title || !content) {
       return NextResponse.json(
-        { error: "title, content, and authorId required" },
+        { error: "title and content are required" },
         { status: 400 }
       );
+    }
+
+    // Prevent duplicate threads for the same match
+    if (matchId) {
+      const existingThread = await prisma.thread.findFirst({
+        where: { matchId },
+      });
+      if (existingThread) {
+        return NextResponse.json(
+          { error: "A thread for this match already exists" },
+          { status: 409 }
+        );
+      }
     }
 
     const thread = await prisma.thread.create({
