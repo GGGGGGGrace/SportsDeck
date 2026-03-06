@@ -76,6 +76,10 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
+    //GenAI usage: Claude Opus 4.5 (line 83-95)
+    // Prompt: "Given a way to save differnt types of feed items 
+    // (posts, replies, match updates, team threads).
+
     for (const reply of repliesToMyPosts) {
       feedItems.push({
         type: "reply",
@@ -231,7 +235,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Group items by groupKey to avoid overwhelming the user
+    // GenAI usage: Claude Opus 4.5 (line 239 - 264)
+    // Prompt: "Group the different items by their groupKey. 
+    // For each group, keep track of the latest timestamp and 
+    // count how many items are in that group. Sort the groups by 
+    // latest timestamp descending.
     const groupMap = new Map<string, { type: string; groupKey: string; latestTimestamp: Date; count: number; latestItem: Record<string, unknown> }>();
     for (const item of feedItems) {
       const existing = groupMap.get(item.groupKey);
@@ -252,11 +260,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Sort groups by latest timestamp descending
     const sortedGroups = Array.from(groupMap.values())
       .sort((a, b) => b.latestTimestamp.getTime() - a.latestTimestamp.getTime());
 
-    // Paginate
+    // Page
     const total = sortedGroups.length;
     const start = (page - 1) * limit;
     const feed = sortedGroups.slice(start, start + limit);
@@ -272,7 +279,7 @@ export async function GET(request: NextRequest) {
     console.error("Feed error:", error);
     return NextResponse.json(
       { error: "Failed to fetch feed" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

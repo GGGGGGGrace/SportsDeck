@@ -55,7 +55,6 @@ model Match {
   matchDate     DateTime
   venue         String?
   stage         String?
-  group         String?
   updatedAt     DateTime @default(now()) @updatedAt
 
   threads Thread[]

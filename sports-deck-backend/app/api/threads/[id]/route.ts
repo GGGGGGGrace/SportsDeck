@@ -20,7 +20,7 @@ export async function PATCH(
 
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+    return NextResponse.json({ error: "Update failed" }, { status: 503 });
   }
 }
 
@@ -57,7 +57,7 @@ export async function GET(
     return NextResponse.json(thread);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to fetch thread" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch thread" }, { status: 503 });
   }
 }
 
@@ -76,6 +76,6 @@ export async function DELETE(
 
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+    return NextResponse.json({ error: "Delete failed" }, { status: 503 });
   }
 }

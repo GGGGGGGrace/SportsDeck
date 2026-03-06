@@ -65,7 +65,7 @@ export async function POST(
     console.error("Follow error:", error);
     return NextResponse.json(
       { error: "Failed to follow user" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }
@@ -117,7 +117,7 @@ export async function DELETE(
     console.error("Unfollow error:", error);
     return NextResponse.json(
       { error: "Failed to unfollow user" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

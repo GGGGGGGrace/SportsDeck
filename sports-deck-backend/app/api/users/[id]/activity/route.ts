@@ -2,18 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 
 /**
- * GET /api/users/[id]/activity
- * Activity chart data for a user over a period of time.
- * Query params (both required):
- *   - dateFrom: ISO date string (e.g. "2026-01-01")
- *   - dateTo:   ISO date string (e.g. "2026-03-05")
- *
- * Returns an array of { date, posts, replies, total } daily buckets.
- *
- * As a visitor,
- * I want to see the activity chart of a user over a certain period of
- * time. Activity is determined based on the number of posts and comments
- * authored by the user.
+ * As a visitor, I want to see the activity chart of a user over a 
+ * certain period of time. Activity is determined based on the number 
+ * of posts and comments authored by the user.
  */
 export async function GET(
   request: NextRequest,
@@ -77,7 +68,12 @@ export async function GET(
       }),
     ]);
 
-    // Build daily buckets
+    // GenAI usage: Claude Opus 4.5
+    // Prompt: "Given a list of posts and replies with their creation timestamps, 
+    // bucket them by day and count how many posts and replies were created each day. 
+    // The date range is from dateFrom to dateTo. Return an array of objects with date, 
+    // post count, reply count, and total activity for each day in the range."
+
     const buckets = new Map<string, { posts: number; replies: number }>();
 
     // Initialize all day buckets so there are no gaps in the chart
@@ -129,7 +125,7 @@ export async function GET(
     console.error("Activity chart error:", error);
     return NextResponse.json(
       { error: "Failed to fetch activity data" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

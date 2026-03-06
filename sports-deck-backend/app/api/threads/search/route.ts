@@ -55,6 +55,6 @@ export async function GET(req: Request) {
 
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Search failed" }, { status: 500 });
+    return NextResponse.json({ error: "Search failed" }, { status: 503 });
   }
 }

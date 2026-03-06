@@ -16,6 +16,6 @@ export async function POST(req: Request) {
     return NextResponse.json(reply);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to create reply" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create reply" }, { status: 503 });
   }
 }

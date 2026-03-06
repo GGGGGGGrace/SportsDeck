@@ -27,7 +27,7 @@ export async function GET() {
     return NextResponse.json(threads);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to fetch threads" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch threads" }, { status: 503 });
   }
 }
 
@@ -97,6 +97,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(thread);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to create thread" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create thread" }, { status: 503 });
   }
 }

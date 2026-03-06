@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching matches:", error);
     return NextResponse.json(
       { error: "Failed to fetch matches" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

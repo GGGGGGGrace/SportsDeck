@@ -57,7 +57,7 @@ export async function GET(
     console.error("Fetch following error:", error);
     return NextResponse.json(
       { error: "Failed to fetch following" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

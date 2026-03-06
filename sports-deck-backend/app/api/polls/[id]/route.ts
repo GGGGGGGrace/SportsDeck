@@ -23,6 +23,6 @@ export async function GET(
 
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Poll fetch failed" }, { status: 500 });
+    return NextResponse.json({ error: "Poll fetch failed" }, { status: 503 });
   }
 }
