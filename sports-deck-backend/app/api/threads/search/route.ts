@@ -12,6 +12,7 @@ export async function GET(req: Request) {
 
     const threads = await prisma.thread.findMany({
       where: {
+        hidden: false,
         title: title
           ? { contains: title }
           : undefined,
@@ -40,6 +41,9 @@ export async function GET(req: Request) {
         author: true,
         tags: true,
         posts: {
+          where: {
+            hidden: false
+          },
           include: {
             replies: true
           }

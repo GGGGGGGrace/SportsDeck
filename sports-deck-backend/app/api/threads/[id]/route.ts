@@ -37,6 +37,7 @@ export async function GET(
       include: {
         author: true,
         posts: {
+          where: { hidden: false },
           include: {
             author: true,
             replies: {
