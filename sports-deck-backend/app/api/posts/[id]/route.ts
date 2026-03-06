@@ -3,14 +3,15 @@ import { prisma } from "@/app/lib/prisma";
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
 
     const post = await prisma.post.update({
       where: {
-        id: Number(params.id),
+        id: Number(id),
       },
       data: {
         content: body.content,
@@ -23,7 +24,7 @@ export async function PUT(
     return NextResponse.json(post);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to update post" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update post" }, { status: 503 });
   }
 }
 
@@ -42,7 +43,7 @@ export async function DELETE(
 
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+    return NextResponse.json({ error: "Delete failed" }, { status: 503 });
   }
 }
 
@@ -66,7 +67,7 @@ export async function PATCH(
 
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+    return NextResponse.json({ error: "Update failed" }, { status: 503 });
   }
 }
 

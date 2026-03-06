@@ -1,4 +1,3 @@
-import axios, { AxiosInstance } from "axios";
 import { prisma } from "./prisma";
 
 const FOOTBALL_API_BASE = "https://api.football-data.org/v4";
@@ -6,13 +5,16 @@ const COMPETITION_CODE = "PL"; // Premier League
 
 // Cache TTL in seconds
 const CACHE_TTL = {
-  IMMUTABLE: 30 * 24 * 60 * 60,  // 30 days: teams, competition structure, finished matches
-  SEMI_STATIC: 12 * 60 * 60,     // 12 hours: scheduled fixtures (rarely change)
-  DYNAMIC: 2 * 60 * 60,          // 2 hours: standings (updated after daily results)
+  IMMUTABLE: 30 * 24 * 60 * 60,  // 30 days
+  SEMI_STATIC: 12 * 60 * 60,     // 12 hours
+  DYNAMIC: 2 * 60 * 60,          // 2 hours
 };
+// GenAI usage: Claude Opus 4.5 (line 15 - 36)
+// Prompt: "Implement a simple in-memory rate limiter 
+// that allows up to 10 requests per minute. 
+// If the limit is exceeded, it should delay 
+// the request until a slot is available. 
 
-// constraint for rate limiting: max 10 requests per minute to football-data.org
-// TODO cite
 class RateLimiter {
   private timestamps: number[] = [];
   private maxRequests = 10;
@@ -36,23 +38,21 @@ class RateLimiter {
 
 const rateLimiter = new RateLimiter();
 
-// Create an Axios instance with the API key header
-function getApiClient(): AxiosInstance {
+// GenAI usage: Claude Opus 4.5 (line 43 - 56)
+// Prompt: "Implement a function that returns an 
+// instance configured with the base URL of the football-data.org 
+// API and includes the API key from an environment 
+// variable in the headers."
+
+function getApiKey(): string {
   const apiKey = process.env.MATCH_API_KEY;
   if (!apiKey) {
     throw new Error("MATCH_API_KEY environment variable is not set");
   }
 
-  return axios.create({
-    baseURL: FOOTBALL_API_BASE,
-    headers: {
-      "X-Auth-Token": apiKey,
-    },
-    timeout: 10000,
-  });
+  return apiKey;
 }
 
-// ─── Cache helpers ──────────────────────────────────────────────────────────
 
 async function getCached<T>(key: string): Promise<T | null> {
   try {
@@ -60,11 +60,9 @@ async function getCached<T>(key: string): Promise<T | null> {
     if (!entry) return null;
 
     if (new Date(entry.expiresAt) < new Date()) {
-      // Expired — delete and return null
       await prisma.apiCache.delete({ where: { key } }).catch(() => {});
       return null;
     }
-
     return JSON.parse(entry.data) as T;
   } catch {
     return null;
@@ -86,42 +84,48 @@ async function setCache(key: string, data: unknown, ttlSeconds: number): Promise
   }
 }
 
-// ─── API wrappers ───────────────────────────────────────────────────────────
 
-/**
- * Fetch from football-data.org with cache + rate limiting. (cite)
- */
 async function fetchWithCache<T>(
   path: string,
   cacheKey: string,
   ttlSeconds: number
 ): Promise<T> {
-  // Check cache first
   const cached = await getCached<T>(cacheKey);
   if (cached) return cached;
 
-  // Rate limit then fetch
   await rateLimiter.waitForSlot();
-  const client = getApiClient();
-  const response = await client.get<T>(path);
-  const data = response.data;
+  const apiKey = getApiKey();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
 
-  // Cache the response
+  let response: Response;
+  try {
+    response = await fetch(`${FOOTBALL_API_BASE}${path}`, {
+      method: "GET",
+      headers: {
+        "X-Auth-Token": apiKey,
+      },
+      cache: "no-store",
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!response.ok) {
+    throw new Error(`football-data request failed: ${response.status}`);
+  }
+
+  const data = (await response.json()) as T;
+
   await setCache(cacheKey, data, ttlSeconds);
 
   return data;
 }
 
-// ─── Football-data.org typed responses ──────────────────────────────────────
-
-interface FdTeam {
-  id: number;
-  name: string;
-  shortName: string;
-  tla: string;
-  crest: string;
-  venue?: string;
-}
+// GenAI usage: Claude Opus 4.5 (line 114 - 205)
+// Prompt: "Create interfaces for the football-data.org API 
+// responses for matches, standings and competition info."
 
 interface FdScore {
   fullTime: { home: number | null; away: number | null };
@@ -132,7 +136,6 @@ interface FdMatch {
   id: number;
   matchday: number;
   stage: string;
-  group: string | null;
   utcDate: string;
   status: string; // SCHEDULED, TIMED, FINISHED, POSTPONED, CANCELLED
   homeTeam: { id: number; name: string; shortName: string; tla: string; crest: string };
@@ -178,16 +181,10 @@ interface FdStandingsResponse {
   standings: Array<{
     stage: string;
     type: string;
-    group: string | null;
     table: FdStandingEntry[];
   }>;
 }
 
-interface FdTeamsResponse {
-  competition: { id: number; name: string; emblem: string };
-  season: { id: number; currentMatchday: number };
-  teams: FdTeam[];
-}
 
 interface FdCompetitionResponse {
   id: number;
@@ -198,7 +195,6 @@ interface FdCompetitionResponse {
     startDate: string;
     endDate: string;
     currentMatchday: number;
-    stages: string[];
   };
   seasons: Array<{
     id: number;
@@ -208,11 +204,6 @@ interface FdCompetitionResponse {
   }>;
 }
 
-// ─── Public API functions ───────────────────────────────────────────────────
-
-/**
- * Get competition info (includes currentMatchday).
- */
 export async function getCompetition(): Promise<FdCompetitionResponse> {
   return fetchWithCache<FdCompetitionResponse>(
     `/competitions/${COMPETITION_CODE}`,
@@ -221,48 +212,7 @@ export async function getCompetition(): Promise<FdCompetitionResponse> {
   );
 }
 
-/**
- * Get all teams in the competition.
- */
-export async function getTeams(): Promise<FdTeamsResponse> {
-  const data = await fetchWithCache<FdTeamsResponse>(
-    `/competitions/${COMPETITION_CODE}/teams`,
-    `teams:${COMPETITION_CODE}`,
-    CACHE_TTL.IMMUTABLE
-  );
 
-  // Sync teams to local DB for reference
-  for (const team of data.teams) {
-    try {
-      await prisma.team.upsert({
-        where: { id: team.id },
-        update: {
-          name: team.name,
-          shortName: team.shortName,
-          tla: team.tla,
-          crest: team.crest,
-          venue: team.venue ?? null,
-        },
-        create: {
-          id: team.id,
-          name: team.name,
-          shortName: team.shortName,
-          tla: team.tla,
-          crest: team.crest,
-          venue: team.venue ?? null,
-        },
-      });
-    } catch (e) {
-      console.error(`Failed to sync team ${team.name}:`, e);
-    }
-  }
-
-  return data;
-}
-
-/**
- * Get matches — optionally filtered by matchday or status.
- */
 export async function getMatches(filters?: {
   matchday?: number;
   status?: string;
@@ -279,7 +229,6 @@ export async function getMatches(filters?: {
   const path = `/competitions/${COMPETITION_CODE}/matches${query ? `?${query}` : ""}`;
   const cacheKey = `matches:${COMPETITION_CODE}:${query || "all"}`;
 
-  // Terminal statuses are immutable (result won't change); others refresh periodically
   const terminalStatuses = ["FINISHED", "CANCELLED", "AWARDED"];
   const ttl = filters?.status && terminalStatuses.includes(filters.status)
     ? CACHE_TTL.IMMUTABLE
@@ -287,23 +236,18 @@ export async function getMatches(filters?: {
 
   const data = await fetchWithCache<FdMatchesResponse>(path, cacheKey, ttl);
 
-  // Sync matches to local DB (for thread associations)
   await syncMatchesToDb(data.matches);
 
   return data;
 }
 
-/**
- * Get a single match by its football-data.org ID.
- */
+
 export async function getMatch(matchId: number): Promise<FdMatch> {
   const cacheKey = `match:${matchId}`;
 
-  // Check per-match cache first
   const cached = await getCached<FdMatch>(cacheKey);
   if (cached) return cached;
 
-  // Fetch all matches for the competition (this endpoint is free-tier safe)
   const allMatches = await getMatches();
   const match = allMatches.matches.find((m) => m.id === matchId);
 
@@ -313,7 +257,6 @@ export async function getMatch(matchId: number): Promise<FdMatch> {
     throw err;
   }
 
-  // Cache the individual match
   const terminalStatuses = ["FINISHED", "CANCELLED", "AWARDED"];
   const ttl = terminalStatuses.includes(match.status)
     ? CACHE_TTL.IMMUTABLE
@@ -324,9 +267,7 @@ export async function getMatch(matchId: number): Promise<FdMatch> {
   return match;
 }
 
-/**
- * Get league standings.
- */
+
 export async function getStandings(): Promise<FdStandingsResponse> {
   return fetchWithCache<FdStandingsResponse>(
     `/competitions/${COMPETITION_CODE}/standings`,
@@ -335,7 +276,6 @@ export async function getStandings(): Promise<FdStandingsResponse> {
   );
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function formatScore(match: FdMatch): string | null {
   const ft = match.score?.fullTime;
@@ -345,8 +285,14 @@ function formatScore(match: FdMatch): string | null {
   return null;
 }
 
-// create a discussion thread when a new match is added to the database (if it doesn't already exist)
 async function syncMatchesToDb(matches: FdMatch[]): Promise<void> {
+  const adminUser = await prisma.user.findUnique({
+    where: { username: "defaultadmin" }
+  });
+
+  const now = new Date();
+  const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+
   for (const m of matches) {
     try {
       const match = await prisma.match.upsert({
@@ -364,7 +310,6 @@ async function syncMatchesToDb(matches: FdMatch[]): Promise<void> {
           matchDate: new Date(m.utcDate),
           venue: m.venue ?? null,
           stage: m.stage ?? null,
-          group: m.group ?? null,
         },
         create: {
           externalId: m.id,
@@ -380,63 +325,42 @@ async function syncMatchesToDb(matches: FdMatch[]): Promise<void> {
           matchDate: new Date(m.utcDate),
           venue: m.venue ?? null,
           stage: m.stage ?? null,
-          group: m.group ?? null,
         },
       });
+      
+      const matchDate = new Date(m.utcDate);
 
-      // Auto-create a discussion thread for this match (idempotent)
-      await ensureMatchThread(match.id, m);
+      if (matchDate >= now && matchDate <= twoWeeksLater && adminUser) {
+        const existingThread = await prisma.thread.findFirst({
+          where: { matchId: match.id }
+        });
+
+        if (!existingThread) {
+          await prisma.thread.create({
+            data: {
+              title: `${m.homeTeam.name} vs ${m.awayTeam.name}`,
+              matchId: match.id,
+              authorId: adminUser.id,
+            }
+          });
+        }
+      }
+
     } catch (e) {
       console.error(`Failed to sync match ${m.id}:`, e);
     }
   }
 }
 
-
-async function ensureMatchThread(matchId: string, m: FdMatch): Promise<void> {
-  try {
-    const existingThread = await prisma.thread.findFirst({
-      where: { matchId },
-    });
-    if (existingThread) return;
-
-    const defaultAdmin = await prisma.user.findUnique({
-      where: { email: process.env.ADMIN_EMAIL},
-    });
-    if (!defaultAdmin) {
-      console.warn(
-        "Default admin user not found"
-      );
-      return;
-    }
-
-    const score = formatScore(m);
-    const title = score
-      ? `${m.homeTeam.name} ${score} ${m.awayTeam.name} — Match Discussion`
-      : `${m.homeTeam.name} vs ${m.awayTeam.name} — Match Discussion`;
-
-    await prisma.thread.create({
-      data: {
-        title,
-        matchId,
-        authorId: defaultAdmin.id,
-      },
-    });
-
-    console.log(`Thread for match ${m.id}: ${title} created`);
-  } catch (e) {
-    console.error(`Failed to create thread for match ${m.id}:`, e);
-  }
-}
-
-// ─── Response formatters (for API routes) ───────────────────────────────────
+// GenAI usage: Claude Opus 4.5 (line 347 - 397)
+// Prompt: "Implement helper functions to format the raw API responses about 
+// matches and standings into the shape expected by the frontend.
 
 export function formatMatchResponse(m: FdMatch) {
   return {
     id: m.id,
     matchday: m.matchday,
     stage: m.stage,
-    group: m.group,
     date: m.utcDate,
     status: m.status,
     venue: m.venue ?? null,

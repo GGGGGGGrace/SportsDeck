@@ -57,7 +57,7 @@ export async function GET(
     console.error("Fetch followers error:", error);
     return NextResponse.json(
       { error: "Failed to fetch followers" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

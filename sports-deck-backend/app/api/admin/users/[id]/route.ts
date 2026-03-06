@@ -27,7 +27,7 @@ export async function PATCH(
     console.error(error);
     return NextResponse.json(
       { error: "Failed to update user" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

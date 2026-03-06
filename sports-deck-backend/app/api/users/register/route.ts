@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Auto-login: generate tokens after registration
+    // Generate tokens for the new user
     const tokenPayload: TokenPayload = {
       userId: user.id,
       email: user.email,
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     console.error("Registration error:", error);
     return NextResponse.json(
       { error: "Registration failed" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

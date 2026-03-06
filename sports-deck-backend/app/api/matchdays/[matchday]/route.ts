@@ -32,7 +32,7 @@ export async function GET(
     console.error(`Error fetching matchday:`, error);
     return NextResponse.json(
       { error: "Failed to fetch matchday data" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     console.error(error);
     return NextResponse.json(
       { error: "Report failed" },
-      { status: 500 }
+        { status: 503 }
     );
   }
 }

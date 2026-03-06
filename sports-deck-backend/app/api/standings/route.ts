@@ -13,7 +13,6 @@ export async function GET() {
     const standings = data.standings.map((s) => ({
       stage: s.stage,
       type: s.type,
-      group: s.group,
       table: s.table.map(formatStandingResponse),
     }));
 
@@ -26,7 +25,7 @@ export async function GET() {
     console.error("Error fetching standings:", error);
     return NextResponse.json(
       { error: "Failed to fetch standings" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

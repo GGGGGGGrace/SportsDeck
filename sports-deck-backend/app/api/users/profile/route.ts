@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     console.error("Profile fetch error:", error);
     return NextResponse.json(
       { error: "Failed to fetch profile" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }
@@ -58,8 +58,12 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { username, avatarUrl, favoriteTeam } = body;
 
-    // Build update data — only include provided fields
-    const updateData: Record<string, string> = {};
+    // edit profile, only including my username, avatar and favorite team from the league
+    const updateData: {
+      username?: string;
+      avatarUrl?: string;
+      favoriteTeam?: string;
+    } = {};
 
     if (username !== undefined) {
       if (typeof username !== "string" || username.trim().length === 0) {
@@ -69,7 +73,6 @@ export async function PUT(request: NextRequest) {
         );
       }
 
-      // Check if new username is taken by another user
       const existingUser = await prisma.user.findUnique({
         where: { username },
       });
@@ -84,10 +87,22 @@ export async function PUT(request: NextRequest) {
     }
 
     if (avatarUrl !== undefined) {
+      if (typeof avatarUrl !== "string") {
+        return NextResponse.json(
+          { error: "update failed" },
+          { status: 400 }
+        );
+      }
       updateData.avatarUrl = avatarUrl;
     }
 
     if (favoriteTeam !== undefined) {
+      if (typeof favoriteTeam !== "string") {
+        return NextResponse.json(
+          { error: "update failed" },
+          { status: 400 }
+        );
+      }
       updateData.favoriteTeam = favoriteTeam;
     }
 
@@ -120,7 +135,7 @@ export async function PUT(request: NextRequest) {
     console.error("Profile update error:", error);
     return NextResponse.json(
       { error: "Failed to update profile" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }
