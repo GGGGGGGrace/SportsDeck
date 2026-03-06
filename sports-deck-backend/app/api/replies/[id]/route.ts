@@ -1,16 +1,43 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { authenticate } from "@/app/lib/auth";
 
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authResult = authenticate(req);
+    if (authResult instanceof NextResponse) return authResult;
+
     const { id } = await params;
+    const replyId = Number(id);
+    if (!Number.isInteger(replyId)) {
+      return NextResponse.json({ error: "Invalid reply id" }, { status: 400 });
+    }
+
     const body = await req.json();
+    if (!body.content || typeof body.content !== "string") {
+      return NextResponse.json({ error: "content is required" }, { status: 400 });
+    }
+
+    const existingReply = await prisma.reply.findUnique({
+      where: { id: replyId },
+      select: { id: true, authorId: true },
+    });
+
+    if (!existingReply) {
+      return NextResponse.json({ error: "Reply not found" }, { status: 404 });
+    }
+
+    const isOwner = existingReply.authorId === authResult.userId;
+    const isAdmin = authResult.role === "ADMIN";
+    if (!isOwner && !isAdmin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const reply = await prisma.reply.update({
-      where: { id: Number(id) },
+      where: { id: replyId },
       data: {
         content: body.content,
         version: { increment: 1 }
@@ -26,14 +53,36 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authResult = authenticate(req);
+    if (authResult instanceof NextResponse) return authResult;
+
     const { id } = await params;
+    const replyId = Number(id);
+    if (!Number.isInteger(replyId)) {
+      return NextResponse.json({ error: "Invalid reply id" }, { status: 400 });
+    }
+
+    const existingReply = await prisma.reply.findUnique({
+      where: { id: replyId },
+      select: { id: true, authorId: true },
+    });
+
+    if (!existingReply) {
+      return NextResponse.json({ error: "Reply not found" }, { status: 404 });
+    }
+
+    const isOwner = existingReply.authorId === authResult.userId;
+    const isAdmin = authResult.role === "ADMIN";
+    if (!isOwner && !isAdmin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     await prisma.reply.delete({
-      where: { id: Number(id) }
+      where: { id: replyId }
     });
 
     return NextResponse.json({ message: "Reply deleted" });
