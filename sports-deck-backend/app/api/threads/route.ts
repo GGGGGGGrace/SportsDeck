@@ -4,12 +4,18 @@ import { prisma } from "@/app/lib/prisma";
 export async function GET() {
   try {
     const threads = await prisma.thread.findMany({
+      where: {
+        hidden: false
+      },
       include: {
         author: true,
         posts: {
-          include: {
-            replies: true,
+          where: {
+            hidden: false
           },
+          include: {
+            replies: true
+          }
         },
       },
       orderBy: {
