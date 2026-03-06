@@ -1,11 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { authenticate } from "@/app/lib/auth";
 
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authResult = authenticate(req);
+    if (authResult instanceof NextResponse) return authResult;
+    if (authResult.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const { id } = await params;
     const body = await req.json();
 
@@ -14,6 +21,11 @@ export async function PATCH(
         { error: "banned must be true or false" },
         { status: 400 }
       );
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { id } });
+    if (!existingUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const user = await prisma.user.update({
