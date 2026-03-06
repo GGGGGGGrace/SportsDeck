@@ -20,9 +20,23 @@ model User {
   role         String   @default("USER")
   createdAt    DateTime @default(now())
 
-  threads Thread[]
-  posts   Post[]
-  replies Reply[]
+  threads   Thread[]
+  posts     Post[]
+  replies   Reply[]
+  followers Follow[] @relation("FollowTarget")
+  following Follow[] @relation("FollowInitiator")
+}
+
+model Follow {
+  id         Int      @id @default(autoincrement())
+  followerId String
+  followingId String
+  createdAt  DateTime @default(now())
+
+  follower  User @relation("FollowInitiator", fields: [followerId], references: [id])
+  following User @relation("FollowTarget", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
 }
 
 model Match {
