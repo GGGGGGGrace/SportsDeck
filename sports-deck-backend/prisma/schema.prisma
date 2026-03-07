@@ -85,6 +85,8 @@ model Thread {
   matchId   String?
   match     Match?   @relation(fields: [matchId], references: [id])
   hidden    Boolean  @default(false)
+  sentimentLabel String?
+  sentimentScore Float?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -102,9 +104,13 @@ model Post {
   threadId  Int
   authorId  String
   version   Int      @default(1)
-  hidden    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  hidden    Boolean  @default(false)
+
+  aiModerationLabel String?
+  aiModerationScore Float?
+  translatedText    String?
 
   thread Thread @relation(fields: [threadId], references: [id])
   author User   @relation(fields: [authorId], references: [id])
@@ -174,11 +180,15 @@ model Report {
   id         Int      @id @default(autoincrement())
   reporterId String
   reason     String
-  status     String   @default("PENDING") // PENDING APPROVED DISMISSED
+  status     String   @default("PENDING")
   createdAt  DateTime @default(now())
 
   postId   Int?
   threadId Int?
+
+  aiLabel  String?
+  aiScore  Float?
+  aiReason String?
 
   post   Post?   @relation(fields: [postId], references: [id])
   thread Thread? @relation(fields: [threadId], references: [id])
@@ -189,5 +199,11 @@ model Appeal {
   userId    String
   reason    String
   status    String   @default("PENDING") // PENDING APPROVED REJECTED
+  createdAt DateTime @default(now())
+}
+
+model Digest {
+  id        Int      @id @default(autoincrement())
+  content   String
   createdAt DateTime @default(now())
 }

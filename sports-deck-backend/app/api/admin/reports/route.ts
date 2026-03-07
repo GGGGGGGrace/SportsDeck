@@ -9,9 +9,10 @@ export async function GET() {
       post: true,
       thread: true
     },
-    orderBy: {
-      createdAt: "desc"
-    }
+    orderBy: [
+      { aiScore: "desc" },
+      { createdAt: "desc" }
+    ]
   });
 
   return NextResponse.json(reports);
