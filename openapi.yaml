@@ -1,0 +1,505 @@
+openapi: 3.0.3
+info:
+  title: SportsDeck Backend API
+  description: REST API for the SportsDeck sports discussion platform
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: Users
+  - name: Threads
+  - name: Posts
+  - name: Replies
+  - name: Polls
+  - name: Moderation
+  - name: AI
+  - name: Matches
+
+paths:
+
+  /api/users/register:
+    post:
+      tags:
+        - Users
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              email: test@test.com
+              password: "123456"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              example:
+                message: User registered successfully
+                user:
+                  id: user123
+                  email: test@test.com
+                  role: USER
+                accessToken: token_here
+                refreshToken: token_here
+
+  /api/users/login:
+    post:
+      tags:
+        - Users
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              email: test@test.com
+              password: "123456"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              example:
+                accessToken: token_here
+                refreshToken: token_here
+
+  /api/threads:
+    get:
+      tags:
+        - Threads
+      summary: Get all threads
+      responses:
+        "200":
+          description: List of threads
+          content:
+            application/json:
+              example:
+                - id: 1
+                  title: Who will win tonight?
+                  authorId: user123
+
+    post:
+      tags:
+        - Threads
+      summary: Create thread
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              title: Who will win tonight?
+              authorId: user123
+              matchId: null
+      responses:
+        "200":
+          description: Thread created
+          content:
+            application/json:
+              example:
+                id: 1
+                title: Who will win tonight?
+
+  /api/threads/search:
+    get:
+      tags:
+        - Threads
+      summary: Search threads
+      parameters:
+        - name: title
+          in: query
+          schema:
+            type: string
+        - name: author
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Search results returned
+
+  /api/posts:
+    post:
+      tags:
+        - Posts
+      summary: Create a post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              threadId: 1
+              authorId: user123
+              content: I think the home team will win
+      responses:
+        "200":
+          description: Post created
+
+  /api/posts/{id}:
+    patch:
+      tags:
+        - Posts
+      summary: Update post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            example:
+              content: Updated post content
+      responses:
+        "200":
+          description: Post updated
+
+    delete:
+      tags:
+        - Posts
+      summary: Delete post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Post deleted
+
+  /api/replies:
+    post:
+      tags:
+        - Replies
+      summary: Create reply
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              postId: 1
+              authorId: user123
+              content: I disagree
+      responses:
+        "200":
+          description: Reply created
+
+  /api/polls:
+    post:
+      tags:
+        - Polls
+      summary: Create poll
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              threadId: 1
+              question: Who will win?
+              options:
+                - Home team
+                - Away team
+      responses:
+        "200":
+          description: Poll created
+
+  /api/polls/{id}/vote:
+    post:
+      tags:
+        - Polls
+      summary: Vote in poll
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            example:
+              optionId: 2
+              userId: user123
+      responses:
+        "200":
+          description: Vote recorded
+
+  /api/reports:
+    post:
+      tags:
+        - Moderation
+      summary: Report post or thread
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              postId: 1
+              reason: Inappropriate language
+      responses:
+        "200":
+          description: Report submitted
+
+  /api/admin/reports:
+    get:
+      tags:
+        - Moderation
+      summary: View moderation queue
+      responses:
+        "200":
+          description: List of reports
+
+  /api/admin/reports/{id}:
+    patch:
+      tags:
+        - Moderation
+      summary: Approve or dismiss report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            example:
+              status: APPROVED
+      responses:
+        "200":
+          description: Report updated
+
+  /api/admin/users/{id}/ban:
+    patch:
+      tags:
+        - Moderation
+      summary: Ban user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User banned
+
+  /api/admin/users/{id}/unban:
+    patch:
+      tags:
+        - Moderation
+      summary: Unban user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User unbanned
+
+  /api/posts/{id}/translate:
+    get:
+      tags:
+        - AI
+      summary: Translate post to English
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Translation result
+          content:
+            application/json:
+              example:
+                translation: Hello this match was incredible
+                cached: false
+
+  /api/threads/{id}/sentiment:
+    get:
+      tags:
+        - AI
+      summary: Get thread sentiment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Sentiment result
+          content:
+            application/json:
+              example:
+                label: positive
+                score: 0.87
+
+  /api/digest:
+    get:
+      tags:
+        - AI
+      summary: Get AI daily digest
+      responses:
+        "200":
+          description: Digest summary
+          content:
+            application/json:
+              example:
+                content: Fans are discussing upcoming matches and debating which team will win.
+                cached: false
+
+  /api/matchdays:
+    get:
+      tags:
+        - Matches
+      summary: Get available matchdays
+      description: Returns all available matchdays for the competition and the current matchday.
+      responses:
+        "200":
+          description: Matchday list retrieved successfully
+          content:
+            application/json:
+              example:
+                competition:
+                  id: 2021
+                  name: Premier League
+                  emblem: https://crests.football-data.org/PL.png
+                currentMatchday: 28
+                matchdays:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+        "503":
+          description: Failed to fetch matchdays
+
+  /api/matchdays/{matchday}:
+    get:
+      tags:
+        - Matches
+      summary: Get matches for a matchday
+      description: Returns all matches belonging to a specific matchday.
+      parameters:
+        - name: matchday
+          in: path
+          required: true
+          description: Matchday number (1-38)
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Matchday matches retrieved
+          content:
+            application/json:
+              example:
+                matchday: 28
+                competition:
+                  id: 2021
+                  name: Premier League
+                matches:
+                  - id: 12345
+                    homeTeam: Arsenal
+                    awayTeam: Chelsea
+                    status: FINISHED
+                    score: "2-1"
+        "400":
+          description: Invalid matchday number
+        "503":
+          description: Failed to fetch matchday data
+
+  /api/matches:
+    get:
+      tags:
+        - Matches
+      summary: Get matches
+      description: Returns matches with optional filters such as matchday, status, or date range.
+      parameters:
+        - name: matchday
+          in: query
+          schema:
+            type: integer
+          description: Matchday number (1-38)
+
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Match status (SCHEDULED, TIMED, FINISHED, POSTPONED, CANCELLED, AWARDED)
+
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date in YYYY-MM-DD format
+
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date in YYYY-MM-DD format
+
+      responses:
+        "200":
+          description: Matches retrieved successfully
+          content:
+            application/json:
+              example:
+                competition:
+                  id: 2021
+                  name: Premier League
+                resultSet:
+                  count: 10
+                matches:
+                  - id: 12345
+                    homeTeam: Arsenal
+                    awayTeam: Chelsea
+                    status: FINISHED
+                    score: "2-1"
+        "400":
+          description: Invalid filter parameter
+        "503":
+          description: Failed to fetch matches
+
+  /api/matches/{id}:
+    get:
+      tags:
+        - Matches
+      summary: Get match details
+      description: Returns detailed information for a specific match using its football-data.org ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Football-data match ID
+
+      responses:
+        "200":
+          description: Match retrieved successfully
+          content:
+            application/json:
+              example:
+                id: 12345
+                homeTeam: Arsenal
+                awayTeam: Chelsea
+                status: FINISHED
+                score: "2-1"
+                matchDate: 2026-03-10T18:00:00Z
+        "400":
+          description: Invalid match ID
+        "404":
+          description: Match not found
+        "503":
+          description: Failed to fetch match
