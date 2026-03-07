@@ -1,11 +1,11 @@
 {
   "info": {
-    "_postman_id": "a1177c89-d857-4d09-b52c-0349b50f8056",
-    "name": "postman_collection",
+    "_postman_id": "927d168b-c4ce-4d90-9d3a-f56022f568ef",
+    "name": "postman_collection Copy",
     "description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "52673906",
-    "_collection_link": "https://go.postman.co/collection/52673906-a1177c89-d857-4d09-b52c-0349b50f8056?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/52673906-927d168b-c4ce-4d90-9d3a-f56022f568ef?source=collection_link"
   },
   "item": [
     {
@@ -165,7 +165,9 @@
               "pm.test('status 200', () => pm.response.to.have.status(200));",
               "pm.test('has matches array', () => pm.expect(pm.response.json().matches).to.be.an('array'));"
             ],
-            "type": "text/javascript"
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
           }
         }
       ],
@@ -173,10 +175,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/matches",
+          "raw": "http://localhost:3000/api/matches",
+          "protocol": "http",
           "host": [
-            "{{baseUrl}}"
+            "localhost"
           ],
+          "port": "3000",
           "path": [
             "api",
             "matches"
@@ -198,7 +202,9 @@
               "  pm.expect(body.matches.every(m => m.status === 'FINISHED')).to.be.true;",
               "});"
             ],
-            "type": "text/javascript"
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
           }
         }
       ],
@@ -206,10 +212,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/matches?status=FINISHED",
+          "raw": "http://localhost:3000/api/matches?status=FINISHED",
+          "protocol": "http",
           "host": [
-            "{{baseUrl}}"
+            "localhost"
           ],
+          "port": "3000",
           "path": [
             "api",
             "matches"
@@ -234,7 +242,9 @@
               "pm.test('status 200', () => pm.response.to.have.status(200));",
               "pm.test('matches array', () => pm.expect(pm.response.json().matches).to.be.an('array'));"
             ],
-            "type": "text/javascript"
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
           }
         }
       ],
@@ -242,10 +252,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/matches?dateFrom=2024-01-01&dateTo=2024-12-31",
+          "raw": "http://localhost:3000/api/matches?dateFrom=2024-01-01&dateTo=2024-12-31",
+          "protocol": "http",
           "host": [
-            "{{baseUrl}}"
+            "localhost"
           ],
+          "port": "3000",
           "path": [
             "api",
             "matches"
@@ -284,10 +296,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/matches/:id",
+          "raw": "http://localhost:3000/api/matches/:id",
+          "protocol": "http",
           "host": [
-            "{{baseUrl}}"
+            "localhost"
           ],
+          "port": "3000",
           "path": [
             "api",
             "matches",
@@ -1104,7 +1118,9 @@
               "pm.test('status 400', () => pm.response.to.have.status(400));",
               "pm.test('error message', () => pm.expect(pm.response.json().error).to.include('Invalid match ID'));"
             ],
-            "type": "text/javascript"
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
           }
         }
       ],
@@ -1112,10 +1128,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/matches/abc",
+          "raw": "http://localhost:3000/api/matches/abc",
+          "protocol": "http",
           "host": [
-            "{{baseUrl}}"
+            "localhost"
           ],
+          "port": "3000",
           "path": [
             "api",
             "matches",
@@ -1135,7 +1153,9 @@
               "pm.test('status 200', () => pm.response.to.have.status(200));",
               "pm.test('has matchdays array', () => pm.expect(pm.response.json().matchdays || pm.response.json()).to.exist);"
             ],
-            "type": "text/javascript"
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
           }
         }
       ],
@@ -1143,10 +1163,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/matchdays",
+          "raw": "http://localhost:3000/api/matchdays",
+          "protocol": "http",
           "host": [
-            "{{baseUrl}}"
+            "localhost"
           ],
+          "port": "3000",
           "path": [
             "api",
             "matchdays"
@@ -1175,10 +1197,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/matchdays/10",
+          "raw": "http://localhost:3000/api/matchdays/10",
+          "protocol": "http",
           "host": [
-            "{{baseUrl}}"
+            "localhost"
           ],
+          "port": "3000",
           "path": [
             "api",
             "matchdays",
@@ -1198,7 +1222,9 @@
               "pm.test('status 400', () => pm.response.to.have.status(400));",
               "pm.test('error message', () => pm.expect(pm.response.json().error).to.include('matchday'));"
             ],
-            "type": "text/javascript"
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
           }
         }
       ],
@@ -1206,10 +1232,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/matchdays/99",
+          "raw": "http://localhost:3000/api/matchdays/99",
+          "protocol": "http",
           "host": [
-            "{{baseUrl}}"
+            "localhost"
           ],
+          "port": "3000",
           "path": [
             "api",
             "matchdays",
@@ -1305,10 +1333,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/matchdays",
+          "raw": "http://localhost:3000/api/matchdays",
+          "protocol": "http",
           "host": [
-            "{{baseUrl}}"
+            "localhost"
           ],
+          "port": "3000",
           "path": [
             "api",
             "matchdays"
@@ -1323,10 +1353,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/matchdays/10",
+          "raw": "http://localhost:3000/api/matchdays/10",
+          "protocol": "http",
           "host": [
-            "{{baseUrl}}"
+            "localhost"
           ],
+          "port": "3000",
           "path": [
             "api",
             "matchdays",
