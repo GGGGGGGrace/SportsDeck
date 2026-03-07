@@ -1,0 +1,1969 @@
+{
+  "info": {
+    "_postman_id": "a1177c89-d857-4d09-b52c-0349b50f8056",
+    "name": "postman_collection",
+    "description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52673906",
+    "_collection_link": "https://go.postman.co/collection/52673906-a1177c89-d857-4d09-b52c-0349b50f8056?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "successful register",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"user1@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/users/register",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "successful login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "",
+              "if (jsonData.accessToken && jsonData.refreshToken) {",
+              "    pm.collectionVariables.set(\"accessToken\", jsonData.accessToken);",
+              "    pm.collectionVariables.set(\"refreshToken\", jsonData.refreshToken);",
+              "    console.log(\"Tokens saved successfully!\");",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"user1@example.com\",\n  \"password\": \"SecurePass123!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/users/login",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "access token test",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/users/profile",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "profile"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "refresh token test",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "",
+              "if (jsonData.accessToken && jsonData.refreshToken) {",
+              "    pm.collectionVariables.set(\"accessToken\", jsonData.accessToken);",
+              "    pm.collectionVariables.set(\"refreshToken\", jsonData.refreshToken);",
+              "    console.log(\"Tokens saved successfully!\");",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/users/refresh",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "refresh"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Matches - List (all)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('has matches array', () => pm.expect(pm.response.json().matches).to.be.an('array'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/matches",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "matches"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Matches - Filter by status (FINISHED)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('status filter applied', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.matches.every(m => m.status === 'FINISHED')).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/matches?status=FINISHED",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "matches"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "FINISHED"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Matches - Date range filter",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('matches array', () => pm.expect(pm.response.json().matches).to.be.an('array'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/matches?dateFrom=2024-01-01&dateTo=2024-12-31",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "matches"
+          ],
+          "query": [
+            {
+              "key": "dateFrom",
+              "value": "2024-01-01"
+            },
+            {
+              "key": "dateTo",
+              "value": "2024-12-31"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Match detail - Valid id",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('has id', () => pm.expect(pm.response.json().id || pm.response.json().externalId).to.exist);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/matches/:id",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "matches",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "reject appeal",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"status\": \"REJECTED\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/admin/appeals/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "admin",
+            "appeals",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "approve appeal",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"status\": \"APPROVED\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/admin/appeals/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "admin",
+            "appeals",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "submit appeal",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"userId\": \"cmmd2wn4200006csofqzy6xo8\",\r\n  \"reason\": \"I believe the ban was unfair.\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/appeals",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "appeals"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "unban user",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"banned\": false\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/admin/users/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "admin",
+            "users",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "ban user",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"banned\": true\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/admin/users/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "admin",
+            "users",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "dismiss report",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"status\": \"DISMISSED\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/admin/reports/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "admin",
+            "reports",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "approve report",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"status\": \"APPROVED\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/admin/reports/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "admin",
+            "reports",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "admin view reports",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/admin/reports",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "admin",
+            "reports"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "report a thread",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"userId\": \"cmmd2wn4200006csofqzy6xo8\",\r\n  \"threadId\": 1,\r\n  \"reason\": \"Spam thread\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/reports",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "reports"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "report a post",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"userId\": \"cmmd2wn4200006csofqzy6xo8\",\r\n  \"postId\": 1,\r\n  \"reason\": \"Offensive language\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/reports",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "reports"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get vote result",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW1kMnduNDIwMDAwNmNzb2Zxenk2eG84IiwiZW1haWwiOiJ0ZXN0MkB0ZXN0LmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcyNjkyMDcxLCJleHAiOjE3NzI2OTM4NzF9.Y2brH0YICrpjQv4ehzhl_lWBQwMiiJC4SdB28bJZguo",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n \"threadId\": {{threadId}},\r\n \"question\": \"Who will be man of the match?\",\r\n \"deadline\": \"2026-04-01T00:00:00Z\",\r\n \"options\": [\r\n   \"Salah\",\r\n   \"Van Dijk\",\r\n   \"Alisson\"\r\n ]\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/polls/:id/results",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "polls",
+            ":id",
+            "results"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "vote",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n \"optionId\": 1,\r\n \"userId\": \"cmmd2wn4200006csofqzy6xo8\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/polls/vote",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "polls",
+            "vote"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get vote",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW1kMnduNDIwMDAwNmNzb2Zxenk2eG84IiwiZW1haWwiOiJ0ZXN0MkB0ZXN0LmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcyNjkyMDcxLCJleHAiOjE3NzI2OTM4NzF9.Y2brH0YICrpjQv4ehzhl_lWBQwMiiJC4SdB28bJZguo",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n \"threadId\": {{threadId}},\r\n \"question\": \"Who will be man of the match?\",\r\n \"deadline\": \"2026-04-01T00:00:00Z\",\r\n \"options\": [\r\n   \"Salah\",\r\n   \"Van Dijk\",\r\n   \"Alisson\"\r\n ]\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/polls/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "polls",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "create poll",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW1kMnduNDIwMDAwNmNzb2Zxenk2eG84IiwiZW1haWwiOiJ0ZXN0MkB0ZXN0LmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcyNjkyMDcxLCJleHAiOjE3NzI2OTM4NzF9.Y2brH0YICrpjQv4ehzhl_lWBQwMiiJC4SdB28bJZguo",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n \"threadId\": 1,\r\n \"question\": \"Who will be man of the match?\",\r\n \"deadline\": \"2026-04-01T00:00:00Z\",\r\n \"options\": [\r\n   \"Salah\",\r\n   \"Van Dijk\",\r\n   \"Alisson\"\r\n ]\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/polls",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "polls"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "delete post",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"content\": \"Actually Liverpool wins 3-1\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/posts/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "posts",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "edit post",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"content\": \"Actually Liverpool wins 3-1\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/posts/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "posts",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "search thread",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW1kMnduNDIwMDAwNmNzb2Zxenk2eG84IiwiZW1haWwiOiJ0ZXN0MkB0ZXN0LmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcyNjkyMDcxLCJleHAiOjE3NzI2OTM4NzF9.Y2brH0YICrpjQv4ehzhl_lWBQwMiiJC4SdB28bJZguo",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/threads/search?title=who",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "threads",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "title",
+              "value": "who"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "create replies",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW1kMnduNDIwMDAwNmNzb2Zxenk2eG84IiwiZW1haWwiOiJ0ZXN0MkB0ZXN0LmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcyNjkyMDcxLCJleHAiOjE3NzI2OTM4NzF9.Y2brH0YICrpjQv4ehzhl_lWBQwMiiJC4SdB28bJZguo",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"postId\": 1,\r\n  \"content\": \"I disagree!\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/replies",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "replies"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "new post",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW1kMnduNDIwMDAwNmNzb2Zxenk2eG84IiwiZW1haWwiOiJ0ZXN0MkB0ZXN0LmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcyNjkyMDcxLCJleHAiOjE3NzI2OTM4NzF9.Y2brH0YICrpjQv4ehzhl_lWBQwMiiJC4SdB28bJZguo",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"threadId\": 1,\n  \"content\": \"I think the home team will win.\"\n  \n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/posts",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "posts"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get thread",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/threads",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "threads"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "create thread",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW1lMTR1eHYwMDAweGdzbzljeDIxNHBjIiwiZW1haWwiOiJ0ZXN0M0B0ZXN0LmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcyNzQ5MjU0LCJleHAiOjE3NzI3NTEwNTR9.Eo1o656Hum_gV7QRw7TGavc1fLmRd59XefqdgZLZzGY",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Who will win tonight?\",\n  \"content\": \"I think Liverpool wins.\",\n  \"tags\": [\"prediction\", \"match\"]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/threads",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "threads"
+          ]
+        },
+        "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+      },
+      "response": []
+    },
+    {
+      "name": "Match detail - Invalid id (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 400', () => pm.response.to.have.status(400));",
+              "pm.test('error message', () => pm.expect(pm.response.json().error).to.include('Invalid match ID'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/matches/abc",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "matches",
+            "abc"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Matchdays - Summary",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('has matchdays array', () => pm.expect(pm.response.json().matchdays || pm.response.json()).to.exist);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/matchdays",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "matchdays"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Matchdays - Specific matchday",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('matchday matches', () => pm.expect(pm.response.json().matches).to.be.an('array'));"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/matchdays/10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "matchdays",
+            "10"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Matchdays - Invalid matchday (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 400', () => pm.response.to.have.status(400));",
+              "pm.test('error message', () => pm.expect(pm.response.json().error).to.include('matchday'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/matchdays/99",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "matchdays",
+            "99"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "admin login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "",
+              "if (jsonData.accessToken) {",
+              "        pm.collectionVariables.set(\"adminAccessToken\", jsonData.accessToken);",
+              "        console.log(\"Admin tokens updated!\");",
+              "    ",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin_email@example.com\",\n  \"password\": \"Admin@123456\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/users/login",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:3000/api/admin/reports",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/admin/reports",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "admin",
+            "reports"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "{{baseUrl}}/api/matchdays",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/matchdays",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "matchdays"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "{{baseUrl}}/api/matchdays/10",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/matchdays/10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "matchdays",
+            "10"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:3000/api/polls/1/results",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW1kMnduNDIwMDAwNmNzb2Zxenk2eG84IiwiZW1haWwiOiJ0ZXN0MkB0ZXN0LmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzcyNjkyMDcxLCJleHAiOjE3NzI2OTM4NzF9.Y2brH0YICrpjQv4ehzhl_lWBQwMiiJC4SdB28bJZguo",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n \"threadId\": 1,\r\n \"question\": \"Who will be man of the match?\",\r\n \"deadline\": \"2026-04-01T00:00:00Z\",\r\n \"options\": [\r\n   \"Salah\",\r\n   \"Van Dijk\",\r\n   \"Alisson\"\r\n ]\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/polls/:id/results",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "polls",
+            ":id",
+            "results"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:3000/api/replies/4",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"content\": \"Change idea\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/replies/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "replies",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:3000/api/replies/4",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/replies/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "replies",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:3000/api/standings",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/standings",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "standings"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:3000/api/threads/307",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/threads/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "threads",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "user activity",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/users/:id/activity?dateFrom=2026-03-01&dateTo=2026-03-07",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            ":id",
+            "activity"
+          ],
+          "query": [
+            {
+              "key": "dateFrom",
+              "value": "2026-03-01"
+            },
+            {
+              "key": "dateTo",
+              "value": "2026-03-07"
+            }
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "user follow",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/users/:id/follow:",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            ":id",
+            "follow:"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "user unfollow",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/users/:id/follow",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            ":id",
+            "follow"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "checkfollowers",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/users/:id/followers",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            ":id",
+            "followers"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "remove followers",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/users/:id/followers/:followerid",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            ":id",
+            "followers",
+            ":followerid"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            },
+            {
+              "key": "followerid",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "check user following",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/users/:id/following",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            ":id",
+            "following"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:3000/api/users/feed",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/users/feed",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "feed"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "profile check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/users/profile",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "profile"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "profile edit",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"after edit\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/users/profile",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "profile"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "user logout",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"after edit\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/users/logout",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "logout"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "create toxic post",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"threadId\": 1,\r\n  \"authorId\": \"cmmd2wn4200006csofqzy6xo8\",\r\n  \"content\": \"You are a disgusting idiot and I hate you\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/posts",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "posts"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "sentiment analysis",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/threads/:id/sentiment",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "threads",
+            ":id",
+            "sentiment"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "translation",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"text\": \"hello\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/translate",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "translate"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "create French post",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"threadId\": 1,\r\n  \"content\": \"J'ai adoré l'Angleterre.\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/posts",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "posts"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "digest",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/digest",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "digest"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": ""
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "adminAccessToken",
+      "value": ""
+    }
+  ]
+}

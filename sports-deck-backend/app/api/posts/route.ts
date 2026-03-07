@@ -13,57 +13,57 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
-    if (!body.content || !body.threadId) {
+    const content = typeof body.content === "string" ? body.content.trim() : "";
+    const threadId = Number(body.threadId);
+    if (!content || !Number.isInteger(threadId) || threadId <= 0) {
       return NextResponse.json(
-        { error: "content and threadId are required" },
+        { error: "valid content and threadId are required" },
         { status: 400 }
       );
     }
 
+
     const post = await prisma.post.create({
       data: {
-        content: body.content,
-        threadId: body.threadId,
+        content,
+        threadId,
         authorId: authorId,
       },
     });
-    // Check if moderation result already exists (cache)
+
     let moderationLabel: string | null = null;
     let moderationScore: number | null = null;
-
-    // Run HuggingFace only once
-    const aiResult = await classifyText(
-      "unitary/toxic-bert",
-      body.content
-    );
-
-    const top = Array.isArray(aiResult?.[0]) ? aiResult[0][0] : aiResult?.[0];
-
-    if (top && typeof top.label === "string" && typeof top.score === "number") {
-
-      moderationLabel = top.label;
-      moderationScore = top.score;
-
-      // Save AI result (cache)
-      await prisma.post.update({
-        where: { id: post.id },
-        data: {
-          aiModerationLabel: moderationLabel,
-          aiModerationScore: moderationScore
-        }
-      });
+    try {
+      const aiResult = await classifyText(
+        "unitary/toxic-bert",
+        content
+      );
+      const top = Array.isArray(aiResult?.[0]) ? aiResult[0][0] : aiResult?.[0];
+      if (top && typeof top.label === "string" && typeof top.score === "number") {
+        moderationLabel = top.label;
+        moderationScore = top.score;
+        // Save AI result (cache)
+        await prisma.post.update({
+          where: { id: post.id },
+          data: {
+            aiModerationLabel: moderationLabel,
+            aiModerationScore: moderationScore
+          }
+        });
+      }
+    } catch (e) {
+      console.error("AI moderation failed", e);
     }
 
     if (
       moderationLabel &&
       moderationLabel.toLowerCase().includes("toxic") &&
-      moderationScore &&
+      moderationScore !== null &&
       moderationScore > 0.7
     ) {
-
       await prisma.report.create({
         data: {
-          reporterId: body.authorId,
+          reporterId: authorId,
           reason: "AUTO_FLAGGED",
           postId: post.id,
           aiLabel: moderationLabel,
@@ -71,7 +71,6 @@ export async function POST(req: NextRequest) {
           aiReason: "Auto-flagged by HuggingFace moderation model"
         }
       });
-
     }
 
     return NextResponse.json(post);
