@@ -1,12 +1,24 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { authenticate } from "@/app/lib/auth";
 
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authResult = authenticate(req);
+    if (authResult instanceof NextResponse) return authResult;
+    if (authResult.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const { id } = await params;
+    const reportId = Number(id);
+    if (!Number.isInteger(reportId)) {
+      return NextResponse.json({ error: "Invalid report id" }, { status: 400 });
+    }
+
     const body = await req.json();
 
     if (!body.status) {
@@ -16,8 +28,16 @@ export async function PATCH(
       );
     }
 
+    const existingReport = await prisma.report.findUnique({
+      where: { id: reportId },
+    });
+
+    if (!existingReport) {
+      return NextResponse.json({ error: "Report not found" }, { status: 404 });
+    }
+
     const report = await prisma.report.update({
-      where: { id: Number(id) },
+      where: { id: reportId },
       data: { status: body.status }
     });
 

@@ -1,24 +1,52 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { authenticate } from "@/app/lib/auth";
 
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const body = await req.json();
+  try {
+    const authResult = authenticate(req);
+    if (authResult instanceof NextResponse) return authResult;
+    if (authResult.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-  const appeal = await prisma.appeal.update({
-    where: { id: Number(id) },
-    data: { status: body.status }
-  });
+    const { id } = await params;
+    const appealId = Number(id);
+    if (!Number.isInteger(appealId)) {
+      return NextResponse.json({ error: "Invalid appeal id" }, { status: 400 });
+    }
 
-  if (body.status === "APPROVED") {
-    await prisma.user.update({
-      where: { id: appeal.userId },
-      data: { banned: false }
+    const body = await req.json();
+    if (!body.status || typeof body.status !== "string") {
+      return NextResponse.json({ error: "status is required" }, { status: 400 });
+    }
+
+    const existingAppeal = await prisma.appeal.findUnique({
+      where: { id: appealId },
     });
-  }
 
-  return NextResponse.json(appeal);
+    if (!existingAppeal) {
+      return NextResponse.json({ error: "Appeal not found" }, { status: 404 });
+    }
+
+    const appeal = await prisma.appeal.update({
+      where: { id: appealId },
+      data: { status: body.status }
+    });
+
+    if (body.status === "APPROVED") {
+      await prisma.user.update({
+        where: { id: appeal.userId },
+        data: { banned: false }
+      });
+    }
+
+    return NextResponse.json(appeal);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Failed to update appeal" }, { status: 503 });
+  }
 }
