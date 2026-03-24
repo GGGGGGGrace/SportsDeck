@@ -1,11 +1,19 @@
 import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { classifyText } from "@/app/lib/huggingface";
-import { authenticate } from "@/app/lib/auth";
+import { authenticate, ensureNotBanned } from "@/app/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    try {
+      await ensureNotBanned(body.authorId);
+    } catch {
+      return NextResponse.json(
+        { error: "User is banned" },
+        { status: 403 }
+      );
+    }
     const authResult = authenticate(req);
     const authorId = authResult instanceof NextResponse ? null : authResult.userId;
 

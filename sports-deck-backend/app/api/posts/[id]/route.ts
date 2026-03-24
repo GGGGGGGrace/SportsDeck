@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { authenticate } from "@/app/lib/auth";
+import { authenticate, ensureNotBanned } from "@/app/lib/auth";
 
 export async function PUT(
   req: NextRequest,
@@ -111,6 +111,14 @@ export async function PATCH(
     }
 
     const body = await req.json();
+    try {
+      await ensureNotBanned(body.authorId);
+    } catch {
+      return NextResponse.json(
+        { error: "User is banned" },
+        { status: 403 }
+      );
+    }
     if (!body.content || typeof body.content !== "string") {
       return NextResponse.json({ error: "content is required" }, { status: 400 });
     }

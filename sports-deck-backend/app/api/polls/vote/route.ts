@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { authenticate } from "@/app/lib/auth";
+import { authenticate, ensureNotBanned } from "@/app/lib/auth";
 
 export async function POST(req: NextRequest) {
   const authResult = authenticate(req);
   if (authResult instanceof NextResponse) return authResult;
 
   const body = await req.json();
+  try {
+      await ensureNotBanned(body.authorId);
+    } catch {
+      return NextResponse.json(
+        { error: "User is banned" },
+        { status: 403 }
+      );
+    }
 
   if (!Number.isInteger(body.optionId)) {
     return NextResponse.json({ error: "optionId must be an integer" }, { status: 400 });
