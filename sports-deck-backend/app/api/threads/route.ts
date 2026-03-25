@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     try {
-      await ensureNotBanned(body.authorId);
+      await ensureNotBanned(authorId);
     } catch {
       return NextResponse.json(
         { error: "User is banned" },

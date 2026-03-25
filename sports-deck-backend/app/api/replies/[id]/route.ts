@@ -10,6 +10,9 @@ export async function PATCH(
     const authResult = authenticate(req);
     if (authResult instanceof NextResponse) return authResult;
 
+    const userId = authResult.userId;
+    const role = authResult.role;
+    await ensureNotBanned(userId);
     const { id } = await params;
     const replyId = Number(id);
     if (!Number.isInteger(replyId)) {
@@ -17,14 +20,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    try {
-      await ensureNotBanned(body.authorId);
-    } catch {
-      return NextResponse.json(
-        { error: "User is banned" },
-        { status: 403 }
-      );
-    }
+
     if (!body.content || typeof body.content !== "string") {
       return NextResponse.json({ error: "content is required" }, { status: 400 });
     }
@@ -38,8 +34,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Reply not found" }, { status: 404 });
     }
 
-    const isOwner = existingReply.authorId === authResult.userId;
-    const isAdmin = authResult.role === "ADMIN";
+    const isOwner = existingReply.authorId === userId;
+    const isAdmin = role === "ADMIN";
+
     if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

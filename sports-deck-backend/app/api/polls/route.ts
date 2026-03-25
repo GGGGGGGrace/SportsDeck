@@ -6,15 +6,9 @@ export async function POST(req: NextRequest) {
   const authResult = authenticate(req);
   if (authResult instanceof NextResponse) return authResult;
 
+  const userId = authResult.userId;
+  await ensureNotBanned(userId);
   const body = await req.json();
-  try {
-      await ensureNotBanned(body.authorId);
-    } catch {
-      return NextResponse.json(
-        { error: "User is banned" },
-        { status: 403 }
-      );
-    }
 
   if (!Number.isInteger(body.threadId)) {
     return NextResponse.json({ error: "threadId must be an integer" }, { status: 400 });
@@ -36,7 +30,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid deadline" }, { status: 400 });
   }
 
-  const thread = await prisma.thread.findUnique({ where: { id: body.threadId } });
+  const thread = await prisma.thread.findUnique({
+    where: { id: body.threadId }
+  });
+
   if (!thread) {
     return NextResponse.json({ error: "Thread not found" }, { status: 404 });
   }

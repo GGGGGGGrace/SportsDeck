@@ -5,22 +5,14 @@ import { authenticate, ensureNotBanned } from "@/app/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    try {
-      await ensureNotBanned(body.authorId);
-    } catch {
-      return NextResponse.json(
-        { error: "User is banned" },
-        { status: 403 }
-      );
-    }
     const authResult = authenticate(req);
-    const authorId = authResult instanceof NextResponse ? null : authResult.userId;
+    if (authResult instanceof NextResponse) return authResult;
 
-    if (!authorId) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-    }
+    const authorId = authResult.userId;
 
+    await ensureNotBanned(authorId);
+
+    const body = await req.json();
     const content = typeof body.content === "string" ? body.content.trim() : "";
     const threadId = Number(body.threadId);
     if (!content || !Number.isInteger(threadId) || threadId <= 0) {
@@ -30,12 +22,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-
     const post = await prisma.post.create({
       data: {
         content,
         threadId,
-        authorId: authorId,
+        authorId
       },
     });
 
