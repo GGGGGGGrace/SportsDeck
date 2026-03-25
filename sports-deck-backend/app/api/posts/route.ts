@@ -9,9 +9,17 @@ export async function POST(req: NextRequest) {
     if (authResult instanceof NextResponse) return authResult;
 
     const authorId = authResult.userId;
-
-    await ensureNotBanned(authorId);
-
+    try {
+      await ensureNotBanned(authorId);
+    } catch (err: any) {
+      if (err.message === "User is banned") {
+        return NextResponse.json(
+          { error: "User is banned" },
+          { status: 403 }
+        );
+      }
+      throw err;
+    }
     const body = await req.json();
     const content = typeof body.content === "string" ? body.content.trim() : "";
     const threadId = Number(body.threadId);
@@ -33,15 +41,12 @@ export async function POST(req: NextRequest) {
     let moderationLabel: string | null = null;
     let moderationScore: number | null = null;
     try {
-      const aiResult = await classifyText(
-        "unitary/toxic-bert",
-        content
-      );
+      const aiResult = await classifyText("unitary/toxic-bert", content);
       const top = Array.isArray(aiResult?.[0]) ? aiResult[0][0] : aiResult?.[0];
       if (top && typeof top.label === "string" && typeof top.score === "number") {
         moderationLabel = top.label;
         moderationScore = top.score;
-        // Save AI result (cache)
+
         await prisma.post.update({
           where: { id: post.id },
           data: {
@@ -75,6 +80,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(post);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to create post" }, { status: 503 });
+    return NextResponse.json(
+      { error: "Failed to create post" },
+      { status: 503 }
+    );
   }
 }

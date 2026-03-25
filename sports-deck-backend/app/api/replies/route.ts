@@ -9,7 +9,17 @@ export async function POST(req: NextRequest) {
 
     const userId = authResult.userId;
 
-    await ensureNotBanned(userId);
+    try {
+      await ensureNotBanned(userId);
+    } catch (err: any) {
+      if (err.message === "User is banned") {
+        return NextResponse.json(
+          { error: "User is banned" },
+          { status: 403 }
+        );
+      }
+      throw err;
+    }
 
     const body = await req.json();
 
@@ -31,6 +41,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(reply);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to create reply" }, { status: 503 });
+    return NextResponse.json(
+      { error: "Failed to create reply" },
+      { status: 503 }
+    );
   }
 }

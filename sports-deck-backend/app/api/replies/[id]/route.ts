@@ -12,7 +12,17 @@ export async function PATCH(
 
     const userId = authResult.userId;
     const role = authResult.role;
-    await ensureNotBanned(userId);
+    try {
+      await ensureNotBanned(userId);
+    } catch (err: any) {
+      if (err.message === "User is banned") {
+        return NextResponse.json(
+          { error: "User is banned" },
+          { status: 403 }
+        );
+      }
+      throw err;
+    }
     const { id } = await params;
     const replyId = Number(id);
     if (!Number.isInteger(replyId)) {
@@ -53,7 +63,10 @@ export async function PATCH(
 
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Update failed" }, { status: 503 });
+    return NextResponse.json(
+      { error: "Update failed" },
+      { status: 503 }
+    );
   }
 }
 

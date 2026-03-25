@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authenticate, TokenPayload } from "@/app/lib/auth";
+import { authenticate, TokenPayload, ensureNotBanned } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 
 /**
@@ -16,9 +16,23 @@ export async function POST(
   }
 
   const payload = authResult as TokenPayload;
+  const userId = payload.userId;
+  
+  // Ban check
+  try {
+    await ensureNotBanned(userId);
+  } catch (err: any) {
+    if (err.message === "User is banned") {
+      return NextResponse.json(
+        { error: "User is banned" },
+        { status: 403 }
+      );
+    }
+    throw err;
+  }
   const { id: targetUserId } = await params;
 
-  if (payload.userId === targetUserId) {
+  if (userId === targetUserId) {
     return NextResponse.json(
       { error: "You cannot follow yourself" },
       { status: 400 }
@@ -34,11 +48,10 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if already following
     const existingFollow = await prisma.follow.findUnique({
       where: {
         followerId_followingId: {
-          followerId: payload.userId,
+          followerId: userId,
           followingId: targetUserId,
         },
       },
@@ -52,7 +65,7 @@ export async function POST(
 
     const follow = await prisma.follow.create({
       data: {
-        followerId: payload.userId,
+        followerId: userId,
         followingId: targetUserId,
       },
     });
