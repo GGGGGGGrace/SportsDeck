@@ -18,6 +18,7 @@ export async function apiFetch(
   // Attach JWT if needed
   if (auth) {
     const token = localStorage.getItem("token");
+    console.log("Token being sent:", token);
     if (token) {
       finalHeaders["Authorization"] = `Bearer ${token}`;
     }
