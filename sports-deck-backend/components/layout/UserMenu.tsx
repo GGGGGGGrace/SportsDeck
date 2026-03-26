@@ -23,8 +23,19 @@ export function UserMenu() {
       }
     }
 
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -36,56 +47,61 @@ export function UserMenu() {
   };
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="flex flex-col items-end" ref={containerRef}>
       <button
+        type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+        className="rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
       >
         Account
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mt-2 w-52 rounded-xl border border-zinc-200 bg-white p-1 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
           {isLoggedIn ? (
-            <div className="flex flex-col">
+            <>
               <Link
                 href="/profile"
-                className="px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="block rounded-lg px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 onClick={() => setOpen(false)}
               >
                 Profile
               </Link>
+
               <Link
                 href="/threads"
-                className="px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="block rounded-lg px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 onClick={() => setOpen(false)}
               >
                 My discussions
               </Link>
+
               <button
+                type="button"
                 onClick={handleLogout}
-                className="px-4 py-3 text-left text-sm text-red-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="block w-full rounded-lg px-4 py-3 text-left text-sm text-red-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
                 Log out
               </button>
-            </div>
+            </>
           ) : (
-            <div className="flex flex-col">
+            <>
               <Link
                 href="/login"
-                className="px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="block rounded-lg px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 onClick={() => setOpen(false)}
               >
                 Log in
               </Link>
+
               <Link
                 href="/register"
-                className="px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="block rounded-lg px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 onClick={() => setOpen(false)}
               >
                 Sign up
               </Link>
-            </div>
+            </>
           )}
         </div>
       )}
