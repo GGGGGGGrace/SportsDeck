@@ -1,10 +1,8 @@
 {
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.4.2",
     "@prisma/client": "^7.4.2",
     "axios": "^1.13.6",
     "bcrypt": "^6.0.0",
-    "better-sqlite3": "^12.6.2",
     "dotenv": "^17.3.1",
     "jsonwebtoken": "^9.0.3"
   },
