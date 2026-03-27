@@ -1,18 +1,26 @@
 import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { classifyText } from "@/app/lib/huggingface";
-import { authenticate } from "@/app/lib/auth";
+import { authenticate, ensureNotBanned } from "@/app/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
     const authResult = authenticate(req);
-    const authorId = authResult instanceof NextResponse ? null : authResult.userId;
+    if (authResult instanceof NextResponse) return authResult;
 
-    if (!authorId) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    const authorId = authResult.userId;
+    try {
+      await ensureNotBanned(authorId);
+    } catch (err: any) {
+      if (err.message === "User is banned") {
+        return NextResponse.json(
+          { error: "User is banned" },
+          { status: 403 }
+        );
+      }
+      throw err;
     }
-
+    const body = await req.json();
     const content = typeof body.content === "string" ? body.content.trim() : "";
     const threadId = Number(body.threadId);
     if (!content || !Number.isInteger(threadId) || threadId <= 0) {
@@ -22,27 +30,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-
     const post = await prisma.post.create({
       data: {
         content,
         threadId,
-        authorId: authorId,
+        authorId
       },
     });
 
     let moderationLabel: string | null = null;
     let moderationScore: number | null = null;
     try {
-      const aiResult = await classifyText(
-        "unitary/toxic-bert",
-        content
-      );
+      const aiResult = await classifyText("unitary/toxic-bert", content);
       const top = Array.isArray(aiResult?.[0]) ? aiResult[0][0] : aiResult?.[0];
       if (top && typeof top.label === "string" && typeof top.score === "number") {
         moderationLabel = top.label;
         moderationScore = top.score;
-        // Save AI result (cache)
+
         await prisma.post.update({
           where: { id: post.id },
           data: {
@@ -76,6 +80,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(post);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to create post" }, { status: 503 });
+    return NextResponse.json(
+      { error: "Failed to create post" },
+      { status: 503 }
+    );
   }
 }

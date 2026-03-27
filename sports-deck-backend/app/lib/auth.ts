@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/app/lib/prisma";
 
 export interface TokenPayload {
   userId: string;
@@ -60,5 +61,20 @@ export function authenticate(
       { error: "Invalid or expired token" },
       { status: 401 }
     );
+  }
+}
+
+export async function ensureNotBanned(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { banned: true }
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.banned) {
+    throw new Error("User is banned");
   }
 }
