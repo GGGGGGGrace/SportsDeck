@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # 数据库服务
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456  # 你可以随便设一个
+      - POSTGRES_DB=football_app
+    ports:
+      - "5433:5432" # 把容器的 5432 端口映射到电脑的 5433
+    volumes:
+      - db_data:/var/lib/postgresql/data # 持久化数据，关掉容器后数据不会丢失
+
+  # 你的 Next.js 应用服务
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # 注意：在 Docker 内部，数据库的地址不再是 localhost，而是服务名 db
+      - DATABASE_URL=postgresql://postgres:123456@db:5432/football_app
+    depends_on:
+      - db # 确保先启动数据库，再启动应用
+    restart: always
+
+volumes:
+  db_data:

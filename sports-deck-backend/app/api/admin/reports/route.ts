@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { authenticate } from "@/app/lib/auth";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   const authResult = authenticate(req);
   if (authResult instanceof NextResponse) return authResult;

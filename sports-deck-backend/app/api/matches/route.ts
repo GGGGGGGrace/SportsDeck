@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMatches, formatMatchResponse } from "@/app/lib/footballApi";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/matches
  *

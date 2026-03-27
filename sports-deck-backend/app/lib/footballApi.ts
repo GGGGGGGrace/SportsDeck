@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { MatchStatus } from "@/app/generated/prisma/client";
 
 const FOOTBALL_API_BASE = "https://api.football-data.org/v4";
 const COMPETITION_CODE = "PL"; // Premier League
@@ -63,21 +64,20 @@ async function getCached<T>(key: string): Promise<T | null> {
       await prisma.apiCache.delete({ where: { key } }).catch(() => {});
       return null;
     }
-    return JSON.parse(entry.data) as T;
+    return entry.data as T;
   } catch {
     return null;
   }
 }
 
-async function setCache(key: string, data: unknown, ttlSeconds: number): Promise<void> {
+async function setCache(key: string, data: any, ttlSeconds: number): Promise<void> {
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
-  const jsonData = JSON.stringify(data);
 
   try {
     await prisma.apiCache.upsert({
       where: { key },
-      update: { data: jsonData, expiresAt },
-      create: { key, data: jsonData, expiresAt },
+      update: { data: data, expiresAt }, 
+      create: { key, data: data, expiresAt },
     });
   } catch (e) {
     console.error("Cache write error:", e);
@@ -305,7 +305,7 @@ async function syncMatchesToDb(matches: FdMatch[]): Promise<void> {
           homeScore: m.score?.fullTime?.home ?? null,
           awayScore: m.score?.fullTime?.away ?? null,
           score: formatScore(m),
-          status: m.status,
+          status: m.status as MatchStatus,
           matchday: m.matchday,
           matchDate: new Date(m.utcDate),
           venue: m.venue ?? null,
@@ -320,7 +320,7 @@ async function syncMatchesToDb(matches: FdMatch[]): Promise<void> {
           homeScore: m.score?.fullTime?.home ?? null,
           awayScore: m.score?.fullTime?.away ?? null,
           score: formatScore(m),
-          status: m.status,
+          status: m.status as MatchStatus,
           matchday: m.matchday,
           matchDate: new Date(m.utcDate),
           venue: m.venue ?? null,
@@ -362,7 +362,7 @@ export function formatMatchResponse(m: FdMatch) {
     matchday: m.matchday,
     stage: m.stage,
     date: m.utcDate,
-    status: m.status,
+    status: m.status as MatchStatus,
     venue: m.venue ?? null,
     homeTeam: {
       id: m.homeTeam.id,
