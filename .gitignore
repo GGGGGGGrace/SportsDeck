@@ -60,3 +60,4 @@ Thumbs.db
 # ==============================
 sports-deck-backend/app/generated/prisma
 startup_local.sh
+.env.local
