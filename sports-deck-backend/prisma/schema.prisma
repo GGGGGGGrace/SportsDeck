@@ -7,17 +7,43 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
+  //url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum MatchStatus {
+  SCHEDULED
+  TIMED
+  FINISHED
+  POSTPONED
+  CANCELLED
+}
+
+enum ReportStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AppealStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model User {
-  id           String   @id @default(cuid())
+  id           String    @id @default(uuid()) @db.Uuid
   email        String   @unique
   password     String
   username     String?  @unique
   avatarUrl    String?
   favoriteTeam String?
-  role         String   @default("USER")
+  role         UserRole   @default(USER)
   banned       Boolean  @default(false)
   createdAt    DateTime @default(now())
 
@@ -30,8 +56,8 @@ model User {
 
 model Follow {
   id          Int      @id @default(autoincrement())
-  followerId  String
-  followingId String
+  followerId  String   @db.Uuid
+  followingId String   @db.Uuid
   createdAt   DateTime @default(now())
 
   follower  User @relation("FollowInitiator", fields: [followerId], references: [id])
@@ -41,7 +67,7 @@ model Follow {
 }
 
 model Match {
-  id            String   @id @default(cuid())
+  id            String      @id @default(uuid()) @db.Uuid
   externalId    Int      @unique
   homeTeam      String
   awayTeam      String
@@ -50,7 +76,7 @@ model Match {
   homeScore     Int?
   awayScore     Int?
   score         String?
-  status        String
+  status        MatchStatus
   matchday      Int      @default(0)
   matchDate     DateTime
   venue         String?
@@ -72,7 +98,7 @@ model Team {
 
 model ApiCache {
   key       String   @id
-  data      String
+  data      Json
   expiresAt DateTime
   updatedAt DateTime @default(now()) @updatedAt
 }
@@ -80,9 +106,9 @@ model ApiCache {
 model Thread {
   id        Int      @id @default(autoincrement())
   title     String
-  authorId  String
+  authorId  String   @db.Uuid
   teamId    Int?
-  matchId   String?
+  matchId   String?  @db.Uuid
   match     Match?   @relation(fields: [matchId], references: [id])
   hidden    Boolean  @default(false)
   sentimentLabel String?
@@ -100,9 +126,9 @@ model Thread {
 
 model Post {
   id        Int      @id @default(autoincrement())
-  content   String
+  content   String   @db.Text
   threadId  Int
-  authorId  String
+  authorId  String   @db.Uuid
   version   Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -110,6 +136,7 @@ model Post {
 
   aiModerationLabel String?
   aiModerationScore Float?
+  aiModerationReason String? @db.Text
   translatedText    String?
 
   thread Thread @relation(fields: [threadId], references: [id])
@@ -121,9 +148,9 @@ model Post {
 
 model Reply {
   id        Int      @id @default(autoincrement())
-  content   String
+  content   String   @db.Text
   postId    Int
-  authorId  String
+  authorId  String   @db.Uuid
   version   Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -171,16 +198,16 @@ model PollOption {
 model PollVote {
   id       Int    @id @default(autoincrement())
   optionId Int
-  userId   String
+  userId   String @db.Uuid
 
   option PollOption @relation(fields: [optionId], references: [id])
 }
 
 model Report {
   id         Int      @id @default(autoincrement())
-  reporterId String
+  reporterId String       @db.Uuid
   reason     String
-  status     String   @default("PENDING")
+  status     ReportStatus @default(PENDING)
   createdAt  DateTime @default(now())
 
   postId   Int?
@@ -188,7 +215,7 @@ model Report {
 
   aiLabel  String?
   aiScore  Float?
-  aiReason String?
+  aiReason String? @db.Text
 
   post   Post?   @relation(fields: [postId], references: [id])
   thread Thread? @relation(fields: [threadId], references: [id])
@@ -196,14 +223,14 @@ model Report {
 
 model Appeal {
   id        Int      @id @default(autoincrement())
-  userId    String
+  userId    String   @db.Uuid
   reason    String
-  status    String   @default("PENDING") // PENDING APPROVED REJECTED
+  status    AppealStatus @default(PENDING)
   createdAt DateTime @default(now())
 }
 
 model Digest {
   id        Int      @id @default(autoincrement())
-  content   String
+  content   String   @db.Text
   createdAt DateTime @default(now())
 }

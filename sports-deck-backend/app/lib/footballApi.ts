@@ -1,4 +1,8 @@
 import { prisma } from "./prisma";
+import { MatchStatus } from "@/app/generated/prisma/client";
+import Redis from 'ioredis';
+
+export const redis = new Redis('redis://redis:6379');
 
 const FOOTBALL_API_BASE = "https://api.football-data.org/v4";
 const COMPETITION_CODE = "PL"; // Premier League
@@ -53,7 +57,7 @@ function getApiKey(): string {
   return apiKey;
 }
 
-
+/*
 async function getCached<T>(key: string): Promise<T | null> {
   try {
     const entry = await prisma.apiCache.findUnique({ where: { key } });
@@ -63,27 +67,35 @@ async function getCached<T>(key: string): Promise<T | null> {
       await prisma.apiCache.delete({ where: { key } }).catch(() => {});
       return null;
     }
-    return JSON.parse(entry.data) as T;
+    return entry.data as T;
   } catch {
     return null;
   }
 }
+*/
 
-async function setCache(key: string, data: unknown, ttlSeconds: number): Promise<void> {
+async function getCached<T>(key: string): Promise<T | null> {
+  const data = await redis.get(key);
+  return data ? JSON.parse(data) : null;
+}
+/*
+async function setCache(key: string, data: any, ttlSeconds: number): Promise<void> {
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
-  const jsonData = JSON.stringify(data);
 
   try {
     await prisma.apiCache.upsert({
       where: { key },
-      update: { data: jsonData, expiresAt },
-      create: { key, data: jsonData, expiresAt },
+      update: { data: data, expiresAt }, 
+      create: { key, data: data, expiresAt },
     });
   } catch (e) {
     console.error("Cache write error:", e);
   }
 }
-
+*/
+async function setCache(key: string, data: any, ttlSeconds: number): Promise<void> {
+  await redis.set(key, JSON.stringify(data), 'EX', ttlSeconds);
+}
 
 async function fetchWithCache<T>(
   path: string,
@@ -267,6 +279,37 @@ export async function getMatch(matchId: number): Promise<FdMatch> {
   return match;
 }
 
+export async function syncTeams() {
+  const data = await fetchWithCache<any>(
+    `/competitions/${COMPETITION_CODE}/teams`, 
+    `teams:${COMPETITION_CODE}`, 
+    86400
+  );
+
+  let count = 0;
+  for (const team of data.teams) {
+    await prisma.team.upsert({
+      where: { id: team.id },
+      update: {
+        name: team.name,
+        shortName: team.shortName,
+        tla: team.tla,
+        crest: team.crest,
+        venue: team.venue,
+      },
+      create: {
+        id: team.id,
+        name: team.name,
+        shortName: team.shortName,
+        tla: team.tla,
+        crest: team.crest,
+        venue: team.venue,
+      },
+    });
+    count++;
+  }
+}
+
 
 export async function getStandings(): Promise<FdStandingsResponse> {
   return fetchWithCache<FdStandingsResponse>(
@@ -305,7 +348,7 @@ async function syncMatchesToDb(matches: FdMatch[]): Promise<void> {
           homeScore: m.score?.fullTime?.home ?? null,
           awayScore: m.score?.fullTime?.away ?? null,
           score: formatScore(m),
-          status: m.status,
+          status: m.status as MatchStatus,
           matchday: m.matchday,
           matchDate: new Date(m.utcDate),
           venue: m.venue ?? null,
@@ -320,7 +363,7 @@ async function syncMatchesToDb(matches: FdMatch[]): Promise<void> {
           homeScore: m.score?.fullTime?.home ?? null,
           awayScore: m.score?.fullTime?.away ?? null,
           score: formatScore(m),
-          status: m.status,
+          status: m.status as MatchStatus,
           matchday: m.matchday,
           matchDate: new Date(m.utcDate),
           venue: m.venue ?? null,
@@ -362,7 +405,7 @@ export function formatMatchResponse(m: FdMatch) {
     matchday: m.matchday,
     stage: m.stage,
     date: m.utcDate,
-    status: m.status,
+    status: m.status as MatchStatus,
     venue: m.venue ?? null,
     homeTeam: {
       id: m.homeTeam.id,

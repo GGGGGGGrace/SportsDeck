@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getCompetition, getMatches } from "@/app/lib/footballApi";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/matchdays
  *

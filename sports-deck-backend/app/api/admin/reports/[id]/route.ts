@@ -1,3 +1,5 @@
+
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { authenticate } from "@/app/lib/auth";
@@ -67,4 +69,46 @@ export async function PATCH(
         { status: 503 }
     );
   }
+}
+
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
+  const report = await prisma.report.findUnique({
+    where: { id: Number(id) },
+    include: {
+      post: {
+        include: {
+          author: true,
+          thread: true
+        }
+      },
+      thread: true
+    }
+  });
+
+  if (!report) {
+    return NextResponse.json(
+      { error: "Report not found" },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json({
+    reportId: report.id,
+    reason: report.reason,
+    status: report.status,
+
+    content: report.post?.content,
+    threadTitle: report.post?.thread?.title,
+
+    aiVerdict: {
+      label: report.post?.aiModerationLabel,
+      score: report.post?.aiModerationScore,
+      explanation: report.post?.aiModerationReason
+    }
+  });
 }

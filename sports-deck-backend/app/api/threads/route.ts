@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { authenticate } from "@/app/lib/auth";
+import { authenticate, ensureNotBanned } from "@/app/lib/auth";
 
 export async function GET() {
   try {
@@ -9,7 +9,12 @@ export async function GET() {
         hidden: false
       },
       include: {
-        author: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
         posts: {
           where: {
             hidden: false
@@ -39,6 +44,14 @@ export async function POST(req: NextRequest) {
     const authorId = authResult.userId;
 
     const body = await req.json();
+    try {
+      await ensureNotBanned(authorId);
+    } catch {
+      return NextResponse.json(
+        { error: "User is banned" },
+        { status: 403 }
+      );
+    }
     const { title, content, matchId, tags } = body;
 
     if (!title || !content) {

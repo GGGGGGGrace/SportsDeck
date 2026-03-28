@@ -1,6 +1,14 @@
+/*
 import "dotenv/config";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../app/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import Redis from 'ioredis';
+
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool as any);
+const prisma = new PrismaClient({ adapter });
 
 const FOOTBALL_API_BASE = "https://api.football-data.org/v4";
 const COMPETITION_CODE = "PL";
@@ -24,17 +32,8 @@ type CompetitionResponse = {
 };
 
 type TeamsResponse = {
-  competition: {
-    id: number;
-    name: string;
-    code: string;
-  };
-  season: {
-    id: number;
-    startDate: string;
-    endDate: string;
-    currentMatchday: number;
-  };
+  competition: { id: number; name: string; code: string };
+  season: { id: number; startDate: string; endDate: string; currentMatchday: number };
   teams: Array<{
     id: number;
     name: string;
@@ -45,43 +44,25 @@ type TeamsResponse = {
   }>;
 };
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
-});
-
-const prisma = new (PrismaClient as any)({ adapter });
-
 function getApiKey(): string {
   const apiKey = process.env.MATCH_API_KEY;
-  if (!apiKey) {
-    throw new Error("MATCH_API_KEY environment variable is not set");
-  }
+  if (!apiKey) throw new Error("MATCH_API_KEY is missing");
   return apiKey;
 }
 
 async function fetchFootballData<T>(path: string): Promise<T> {
   const response = await fetch(`${FOOTBALL_API_BASE}${path}`, {
     method: "GET",
-    headers: {
-      "X-Auth-Token": getApiKey(),
-    },
+    headers: { "X-Auth-Token": getApiKey() },
     cache: "no-store",
   });
-
-  if (!response.ok) {
-    throw new Error(`football-data request failed: ${response.status}`);
-  }
-
+  if (!response.ok) throw new Error(`API failed: ${response.status}`);
   return (await response.json()) as T;
 }
 
 async function main() {
-  const competition = await fetchFootballData<CompetitionResponse>(
-    `/competitions/${COMPETITION_CODE}`
-  );
-  const teamsResponse = await fetchFootballData<TeamsResponse>(
-    `/competitions/${COMPETITION_CODE}/teams`
-  );
+  const competition = await fetchFootballData<CompetitionResponse>(`/competitions/${COMPETITION_CODE}`);
+  const teamsResponse = await fetchFootballData<TeamsResponse>(`/competitions/${COMPETITION_CODE}/teams`);
 
   let syncedCount = 0;
 
@@ -112,26 +93,46 @@ async function main() {
   await prisma.apiCache.upsert({
     where: { key: `competition:${COMPETITION_CODE}` },
     update: {
-      data: JSON.stringify(competition),
+      data: competition as any,
       expiresAt: new Date(Date.now() + thirtyDaysMs),
     },
     create: {
       key: `competition:${COMPETITION_CODE}`,
-      data: JSON.stringify(competition),
+      data: competition as any,
       expiresAt: new Date(Date.now() + thirtyDaysMs),
     },
   });
 
-  console.log(
-    `Football data synced successfully: ${syncedCount} teams and competition metadata`
-  );
+  console.log(`Synced: ${syncedCount} teams.`);
 }
 
 main()
   .catch((error) => {
-    console.error("football data sync failed:", error);
+    console.error(error);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });
+*/
+import { syncTeams, getMatches, redis } from "../app/lib/footballApi";
+import { prisma } from "../app/lib/prisma"; 
+
+async function main() {
+  console.log("Starting data sync...");
+  await syncTeams(); 
+  await getMatches();
+  console.log("Data sync complete.");
+}
+
+main()
+  .catch((error) => {
+    console.error("Sync failed:", error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+    redis.quit();
+  });
+  
