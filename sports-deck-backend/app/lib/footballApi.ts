@@ -1,5 +1,8 @@
 import { prisma } from "./prisma";
 import { MatchStatus } from "@/app/generated/prisma/client";
+import Redis from 'ioredis';
+
+export const redis = new Redis('redis://redis:6379');
 
 const FOOTBALL_API_BASE = "https://api.football-data.org/v4";
 const COMPETITION_CODE = "PL"; // Premier League
@@ -54,7 +57,7 @@ function getApiKey(): string {
   return apiKey;
 }
 
-
+/*
 async function getCached<T>(key: string): Promise<T | null> {
   try {
     const entry = await prisma.apiCache.findUnique({ where: { key } });
@@ -69,7 +72,13 @@ async function getCached<T>(key: string): Promise<T | null> {
     return null;
   }
 }
+*/
 
+async function getCached<T>(key: string): Promise<T | null> {
+  const data = await redis.get(key);
+  return data ? JSON.parse(data) : null;
+}
+/*
 async function setCache(key: string, data: any, ttlSeconds: number): Promise<void> {
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
 
@@ -83,7 +92,10 @@ async function setCache(key: string, data: any, ttlSeconds: number): Promise<voi
     console.error("Cache write error:", e);
   }
 }
-
+*/
+async function setCache(key: string, data: any, ttlSeconds: number): Promise<void> {
+  await redis.set(key, JSON.stringify(data), 'EX', ttlSeconds);
+}
 
 async function fetchWithCache<T>(
   path: string,
@@ -265,6 +277,37 @@ export async function getMatch(matchId: number): Promise<FdMatch> {
   await setCache(cacheKey, match, ttl);
 
   return match;
+}
+
+export async function syncTeams() {
+  const data = await fetchWithCache<any>(
+    `/competitions/${COMPETITION_CODE}/teams`, 
+    `teams:${COMPETITION_CODE}`, 
+    86400
+  );
+
+  let count = 0;
+  for (const team of data.teams) {
+    await prisma.team.upsert({
+      where: { id: team.id },
+      update: {
+        name: team.name,
+        shortName: team.shortName,
+        tla: team.tla,
+        crest: team.crest,
+        venue: team.venue,
+      },
+      create: {
+        id: team.id,
+        name: team.name,
+        shortName: team.shortName,
+        tla: team.tla,
+        crest: team.crest,
+        venue: team.venue,
+      },
+    });
+    count++;
+  }
 }
 
 

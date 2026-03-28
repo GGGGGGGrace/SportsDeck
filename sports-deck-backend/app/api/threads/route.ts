@@ -9,7 +9,12 @@ export async function GET() {
         hidden: false
       },
       include: {
-        author: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
         posts: {
           where: {
             hidden: false

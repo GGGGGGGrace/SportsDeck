@@ -136,6 +136,7 @@ model Post {
 
   aiModerationLabel String?
   aiModerationScore Float?
+  aiModerationReason String? @db.Text
   translatedText    String?
 
   thread Thread @relation(fields: [threadId], references: [id])

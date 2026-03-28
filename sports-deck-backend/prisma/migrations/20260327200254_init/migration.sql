@@ -107,6 +107,7 @@ CREATE TABLE "Post" (
     "hidden" BOOLEAN NOT NULL DEFAULT false,
     "aiModerationLabel" TEXT,
     "aiModerationScore" DOUBLE PRECISION,
+    "aiModerationReason" TEXT,
     "translatedText" TEXT,
 
     CONSTRAINT "Post_pkey" PRIMARY KEY ("id")

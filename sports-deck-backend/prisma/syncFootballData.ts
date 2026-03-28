@@ -1,7 +1,10 @@
+/*
 import "dotenv/config";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../app/generated/prisma/client";
+import Redis from 'ioredis';
+
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool as any);
@@ -112,3 +115,24 @@ main()
     await prisma.$disconnect();
     await pool.end();
   });
+*/
+import { syncTeams, getMatches, redis } from "../app/lib/footballApi";
+import { prisma } from "../app/lib/prisma"; 
+
+async function main() {
+  console.log("Starting data sync...");
+  await syncTeams(); 
+  await getMatches();
+  console.log("Data sync complete.");
+}
+
+main()
+  .catch((error) => {
+    console.error("Sync failed:", error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+    redis.quit();
+  });
+  
