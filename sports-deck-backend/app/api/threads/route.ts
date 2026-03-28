@@ -6,9 +6,14 @@ export async function GET() {
   try {
     const threads = await prisma.thread.findMany({
       where: {
-        hidden: false
+        hidden: false,
       },
       include: {
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
         author: {
           select: {
             id: true,
@@ -17,11 +22,16 @@ export async function GET() {
         },
         posts: {
           where: {
-            hidden: false
+            hidden: false,
           },
           include: {
-            replies: true
-          }
+            author: true,
+            replies: {
+              include: {
+                author: true,
+              },
+            },
+          },
         },
       },
       orderBy: {
@@ -32,7 +42,10 @@ export async function GET() {
     return NextResponse.json(threads);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to fetch threads" }, { status: 503 });
+    return NextResponse.json(
+      { error: "Failed to fetch threads" },
+      { status: 503 }
+    );
   }
 }
 

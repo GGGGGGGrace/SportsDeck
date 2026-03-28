@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { classifyText } from "@/app/lib/huggingface";
 import { authenticate, ensureNotBanned } from "@/app/lib/auth";
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
