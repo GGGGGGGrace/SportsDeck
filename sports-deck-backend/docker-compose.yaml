@@ -68,8 +68,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
-    # 生产环境下建议加上密码
-    # command: redis-server --requirepass your_redis_password
+    # password: 123456
     #ports:
     #  - "6379:6379"
     healthcheck: # 必须添加
