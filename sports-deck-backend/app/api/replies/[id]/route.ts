@@ -37,7 +37,7 @@ export async function PATCH(
 
     const existingReply = await prisma.reply.findUnique({
       where: { id: replyId },
-      select: { id: true, authorId: true },
+      select: { id: true, authorId: true, content: true, version: true },
     });
 
     if (!existingReply) {
@@ -51,12 +51,21 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Snapshot current content before overwriting
+    await prisma.replyVersion.create({
+      data: {
+        replyId: existingReply.id,
+        content: existingReply.content,
+        version: existingReply.version,
+      },
+    });
+
     const reply = await prisma.reply.update({
       where: { id: replyId },
       data: {
         content: body.content,
-        version: { increment: 1 }
-      }
+        version: { increment: 1 },
+      },
     });
 
     return NextResponse.json(reply);

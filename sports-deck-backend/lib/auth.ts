@@ -7,9 +7,8 @@ export async function login(email: string, password: string) {
   });
 
   localStorage.setItem("token", data.accessToken);
-  if (data.user?.role) {
-    localStorage.setItem("role", data.user.role);
-  }
+  if (data.user?.role) localStorage.setItem("role", data.user.role);
+  if (data.user?.id)   localStorage.setItem("userId", data.user.id);
   return data;
 }
 
@@ -24,13 +23,13 @@ export async function register(
   });
 
   localStorage.setItem("token", data.accessToken);
-  if (data.user?.role) {
-    localStorage.setItem("role", data.user.role);
-  }
+  if (data.user?.role) localStorage.setItem("role", data.user.role);
+  if (data.user?.id)   localStorage.setItem("userId", data.user.id);
   return data;
 }
 
 export function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("role");
+  localStorage.removeItem("userId");
 }
