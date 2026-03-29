@@ -13,6 +13,6 @@ fi
 echo "closing the system..."
 
 cd "$TARGET_DIR"
-docker compose down
-# docker compose down -v # delete volumes, be careful with this command
+docker-compose down
+# docker-compose down -v # delete volumes, be careful with this command
 echo "System closed successfully!"
