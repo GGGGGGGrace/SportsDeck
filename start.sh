@@ -14,6 +14,6 @@ fi
 echo "starting the system..."
 
 cd "$TARGET_DIR"
-docker compose up -d --build
+docker-compose up -d --build
 
 echo "System started successfully! The website is running in the background."
