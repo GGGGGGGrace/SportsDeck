@@ -102,26 +102,89 @@ function ReportModal({
   );
 }
 
+/* ---------- inline reply row with its own translate toggle ---------- */
+function ReplyRow({ reply }: { reply: Reply }) {
+  const [translation, setTranslation] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+
+  async function handleTranslate() {
+    if (translation) {
+      setTranslation(null);
+      return;
+    }
+    setTranslating(true);
+    try {
+      const result = await apiFetch(`/api/replies/${reply.id}/translate`);
+      setTranslation(result.translation);
+    } catch {
+      // silent fail
+    } finally {
+      setTranslating(false);
+    }
+  }
+
+  return (
+    <div className="text-sm">
+      <p>{reply.content}</p>
+      {translation && (
+        <p className="mt-1 rounded-lg bg-blue-50 px-2 py-1 text-xs italic text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+          🌐 {translation}
+        </p>
+      )}
+      <div className="mt-0.5 flex items-center gap-2">
+        {reply.author?.username && (
+          <p className="text-xs text-zinc-500">{reply.author.username}</p>
+        )}
+        <button
+          onClick={handleTranslate}
+          disabled={translating}
+          className="text-xs text-blue-400 hover:underline disabled:opacity-50"
+        >
+          {translating ? "Translating…" : translation ? "Hide translation" : "Translate"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- main PostItem ---------- */
 export function PostItem({ post }: { post: Post }) {
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [replies, setReplies] = useState(post.replies || []);
   const [showReport, setShowReport] = useState(false);
 
+  // Translation state for the post itself
+  const [translation, setTranslation] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+
   async function handleReply() {
     if (!replyText.trim()) return;
 
     try {
       const newReply = await createReply(replyText, post.id);
-
-      // optimistic update
       setReplies((prev) => [...prev, newReply]);
-
       setReplyText("");
       setShowReply(false);
     } catch (err) {
       console.error(err);
       alert("Failed to reply");
+    }
+  }
+
+  async function handleTranslate() {
+    if (translation) {
+      setTranslation(null);
+      return;
+    }
+    setTranslating(true);
+    try {
+      const result = await apiFetch(`/api/posts/${post.id}/translate`);
+      setTranslation(result.translation);
+    } catch {
+      // silent fail — translation service may be unavailable
+    } finally {
+      setTranslating(false);
     }
   }
 
@@ -137,10 +200,20 @@ export function PostItem({ post }: { post: Post }) {
           {post.content}
         </p>
 
+        {/* Translation panel */}
+        {translation && (
+          <div className="mt-2 rounded-xl bg-blue-50 px-3 py-2 dark:bg-blue-900/20">
+            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+              🌐 Translation (English)
+            </p>
+            <p className="mt-0.5 text-sm italic text-blue-700 dark:text-blue-300">
+              {translation}
+            </p>
+          </div>
+        )}
+
         {post.author?.username && (
-          <p className="mt-2 text-xs text-zinc-500">
-            by {post.author.username}
-          </p>
+          <p className="mt-2 text-xs text-zinc-500">by {post.author.username}</p>
         )}
 
         {/* Actions row */}
@@ -150,6 +223,17 @@ export function PostItem({ post }: { post: Post }) {
             className="text-xs text-blue-500 hover:underline"
           >
             Reply
+          </button>
+          <button
+            onClick={handleTranslate}
+            disabled={translating}
+            className="text-xs text-blue-400 hover:underline disabled:opacity-50"
+          >
+            {translating
+              ? "Translating…"
+              : translation
+              ? "Hide translation"
+              : "Translate"}
           </button>
           <button
             onClick={() => setShowReport(true)}
@@ -181,12 +265,7 @@ export function PostItem({ post }: { post: Post }) {
         {replies.length > 0 && (
           <div className="mt-4 space-y-2 border-l pl-4">
             {replies.map((reply) => (
-              <div key={reply.id} className="text-sm">
-                <p>{reply.content}</p>
-                <p className="text-xs text-zinc-500">
-                  {reply.author?.username}
-                </p>
-              </div>
+              <ReplyRow key={reply.id} reply={reply} />
             ))}
           </div>
         )}

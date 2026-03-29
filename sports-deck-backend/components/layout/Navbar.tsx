@@ -11,6 +11,7 @@ const publicLinks = [
   { href: "/matches", label: "Matches" },
   { href: "/standings", label: "Standings" },
   { href: "/threads", label: "Threads" },
+  { href: "/digest", label: "Digest" },
 ];
 
 function isActive(pathname: string, href: string) {

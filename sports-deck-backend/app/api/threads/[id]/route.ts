@@ -68,6 +68,7 @@ export async function GET(
       },
       include: {
         author: true,
+        match: true,
         posts: {
           where: { hidden: false },
           include: {

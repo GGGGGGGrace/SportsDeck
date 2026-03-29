@@ -8,14 +8,96 @@ import { PostItem } from "@/components/posts/PostItem";
 import { ReplyInput } from "@/components/posts/ReplyInput";
 import { apiFetch } from "@/lib/api";
 
+/* ------------------------------------------------------------------ */
+/*  Types                                                               */
+/* ------------------------------------------------------------------ */
+
+type Match = {
+  homeTeam: string;
+  awayTeam: string;
+  homeTeamCrest?: string;
+  awayTeamCrest?: string;
+};
+
 type Thread = {
   id: string;
   title: string;
   content?: string;
-  author?: {
-    username?: string;
-  };
+  author?: { username?: string };
+  match?: Match | null;
 };
+
+type TeamSentiment = { name: string; label: string | null; score: number | null };
+
+type SentimentResult = {
+  overall: { label: string | null; score: number | null };
+  homeTeam: TeamSentiment | null;
+  awayTeam: TeamSentiment | null;
+  cached: boolean;
+};
+
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                             */
+/* ------------------------------------------------------------------ */
+
+function sentimentBg(label: string | null) {
+  if (!label) return "bg-zinc-100 dark:bg-zinc-800";
+  const l = label.toLowerCase();
+  if (l.includes("positive")) return "bg-green-50 dark:bg-green-900/20";
+  if (l.includes("negative")) return "bg-red-50 dark:bg-red-900/20";
+  return "bg-blue-50 dark:bg-blue-900/20";
+}
+
+function sentimentText(label: string | null) {
+  if (!label) return "text-zinc-500";
+  const l = label.toLowerCase();
+  if (l.includes("positive")) return "text-green-700 dark:text-green-400";
+  if (l.includes("negative")) return "text-red-700 dark:text-red-400";
+  return "text-blue-700 dark:text-blue-400";
+}
+
+function sentimentEmoji(label: string | null) {
+  if (!label) return "💬";
+  const l = label.toLowerCase();
+  if (l.includes("positive")) return "😊";
+  if (l.includes("negative")) return "😤";
+  return "😐";
+}
+
+function SentimentBadge({
+  label,
+  score,
+  name,
+}: {
+  label: string | null;
+  score: number | null;
+  name?: string;
+}) {
+  return (
+    <div
+      className={`flex flex-col items-center rounded-2xl px-4 py-3 ${sentimentBg(label)}`}
+    >
+      <span className="text-2xl">{sentimentEmoji(label)}</span>
+      {name && (
+        <span className="mt-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+          {name}
+        </span>
+      )}
+      <span className={`mt-0.5 text-sm font-bold capitalize ${sentimentText(label)}`}>
+        {label ?? "N/A"}
+      </span>
+      {score !== null && (
+        <span className="text-xs text-zinc-400">
+          {Math.round(score * 100)}% confidence
+        </span>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Report modal (unchanged)                                            */
+/* ------------------------------------------------------------------ */
 
 function ThreadReportModal({
   threadId,
@@ -98,6 +180,10 @@ function ThreadReportModal({
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  Page                                                                */
+/* ------------------------------------------------------------------ */
+
 export default function ThreadDetailPage({
   params,
 }: {
@@ -112,16 +198,18 @@ export default function ThreadDetailPage({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showReport, setShowReport] = useState(false);
 
+  // Sentiment state
+  const [sentiment, setSentiment] = useState<SentimentResult | null>(null);
+  const [sentimentLoading, setSentimentLoading] = useState(false);
+  const [sentimentError, setSentimentError] = useState("");
+  const [sentimentLoaded, setSentimentLoaded] = useState(false);
+
   useEffect(() => {
     setIsLoggedIn(Boolean(localStorage.getItem("token")));
 
     async function fetchThread() {
       try {
         const data = await getThreadById(id);
-
-        console.log("THREAD DATA:", data);
-
-        // adjust if your backend wraps data differently
         setThread(data);
         setPosts(data.posts || []);
       } catch (err: any) {
@@ -134,11 +222,29 @@ export default function ThreadDetailPage({
     fetchThread();
   }, [id]);
 
+  async function handleLoadSentiment() {
+    if (sentimentLoaded) {
+      // toggle off
+      setSentiment(null);
+      setSentimentLoaded(false);
+      return;
+    }
+    setSentimentLoading(true);
+    setSentimentError("");
+    try {
+      const data = await apiFetch(`/api/threads/${id}/sentiment`);
+      setSentiment(data);
+      setSentimentLoaded(true);
+    } catch (err: any) {
+      setSentimentError("Could not load sentiment analysis.");
+    } finally {
+      setSentimentLoading(false);
+    }
+  }
+
   async function handleCreatePost(content: string) {
     try {
       const newPost = await createPost(content, id);
-
-      // optimistic update
       setPosts((prev) => [newPost, ...prev]);
     } catch (err) {
       console.error(err);
@@ -150,6 +256,8 @@ export default function ThreadDetailPage({
   if (error) return <p className="text-red-500">{error}</p>;
   if (!thread) return <p>Thread not found.</p>;
 
+  const isMatchThread = !!thread.match;
+
   return (
     <>
       {showReport && (
@@ -157,7 +265,7 @@ export default function ThreadDetailPage({
       )}
 
       <div className="space-y-6">
-        {/* Thread Header */}
+        {/* ---- Thread Header ---- */}
         <div className="rounded-2xl border border-zinc-200 bg-white/60 p-6 dark:border-zinc-800 dark:bg-zinc-900/60">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -187,15 +295,104 @@ export default function ThreadDetailPage({
           </div>
         </div>
 
-        {/* Discussion Section */}
+        {/* ---- Sentiment Section ---- */}
+        <div className="rounded-2xl border border-zinc-200 bg-white/60 p-5 dark:border-zinc-800 dark:bg-zinc-900/60">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold">
+                🧠 Community Sentiment
+              </h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                {isMatchThread
+                  ? "Overall mood + per-team fan sentiment, powered by AI."
+                  : "Overall mood of this discussion, powered by AI."}
+              </p>
+            </div>
+            <button
+              onClick={handleLoadSentiment}
+              disabled={sentimentLoading}
+              className="shrink-0 rounded-full bg-zinc-900 px-4 py-1.5 text-sm font-semibold text-white transition hover:opacity-80 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+            >
+              {sentimentLoading
+                ? "Analyzing…"
+                : sentimentLoaded
+                ? "Hide"
+                : "Analyze"}
+            </button>
+          </div>
+
+          {sentimentError && (
+            <p className="mt-3 text-xs text-red-500">{sentimentError}</p>
+          )}
+
+          {/* Sentiment loading skeleton */}
+          {sentimentLoading && (
+            <div className="mt-4 flex gap-3">
+              {[...Array(isMatchThread ? 3 : 1)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-20 flex-1 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-800"
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Sentiment results */}
+          {sentiment && !sentimentLoading && (
+            <div className="mt-4 space-y-3">
+              {/* Overall */}
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  Overall Thread Mood
+                </p>
+                <SentimentBadge
+                  label={sentiment.overall.label}
+                  score={sentiment.overall.score}
+                />
+              </div>
+
+              {/* Per-team (match threads only) */}
+              {isMatchThread &&
+                (sentiment.homeTeam || sentiment.awayTeam) && (
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                      Fan Sentiment by Team
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {sentiment.homeTeam && (
+                        <SentimentBadge
+                          label={sentiment.homeTeam.label}
+                          score={sentiment.homeTeam.score}
+                          name={sentiment.homeTeam.name}
+                        />
+                      )}
+                      {sentiment.awayTeam && (
+                        <SentimentBadge
+                          label={sentiment.awayTeam.label}
+                          score={sentiment.awayTeam.score}
+                          name={sentiment.awayTeam.name}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              {sentiment.cached && (
+                <p className="text-right text-xs text-zinc-400">
+                  ✓ Cached result
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ---- Discussion Section ---- */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Discussion</h2>
 
-          {/* Create Post */}
           <h3 className="text-sm text-zinc-500">Create a post</h3>
           <ReplyInput onSubmit={handleCreatePost} />
 
-          {/* Posts */}
           {posts.length === 0 ? (
             <p className="text-sm text-zinc-500">No posts yet.</p>
           ) : (

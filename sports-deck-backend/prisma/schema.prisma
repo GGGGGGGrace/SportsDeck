@@ -113,6 +113,10 @@ model Thread {
   hidden    Boolean  @default(false)
   sentimentLabel String?
   sentimentScore Float?
+  homeTeamSentimentLabel String?
+  homeTeamSentimentScore Float?
+  awayTeamSentimentLabel String?
+  awayTeamSentimentScore Float?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -148,12 +152,13 @@ model Post {
 
 model Reply {
   id        Int      @id @default(autoincrement())
-  content   String   @db.Text
-  postId    Int
-  authorId  String   @db.Uuid
-  version   Int      @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  content        String   @db.Text
+  postId         Int
+  authorId       String   @db.Uuid
+  version        Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  translatedText String?
 
   post   Post @relation(fields: [postId], references: [id])
   author User @relation(fields: [authorId], references: [id])
