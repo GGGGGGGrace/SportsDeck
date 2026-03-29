@@ -14,8 +14,12 @@ export async function GET(req: NextRequest) {
   const reports = await prisma.report.findMany({
     where: { status: "PENDING" },
     include: {
-      post: true,
-      thread: true
+      post: {
+        include: { author: { select: { id: true, username: true, email: true } } }
+      },
+      thread: {
+        include: { author: { select: { id: true, username: true, email: true } } }
+      }
     },
     orderBy: [
       { aiScore: "desc" },

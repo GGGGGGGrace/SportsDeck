@@ -22,13 +22,19 @@ export function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     setIsLoggedIn(Boolean(localStorage.getItem("token")));
+    setIsAdmin(localStorage.getItem("role") === "ADMIN");
   }, []);
 
   const navLinks = isLoggedIn
-    ? [...publicLinks, { href: "/feed", label: "Feed" }]
+    ? [
+        ...publicLinks,
+        { href: "/feed", label: "Feed" },
+        ...(isAdmin ? [{ href: "/admin/queue", label: "Admin" }] : []),
+      ]
     : publicLinks;
 
   return (

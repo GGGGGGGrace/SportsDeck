@@ -6,11 +6,13 @@ import { useEffect, useRef, useState } from "react";
 export function UserMenu() {
   const [open, setOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(Boolean(token));
+    setIsAdmin(localStorage.getItem("role") === "ADMIN");
   }, []);
 
   useEffect(() => {
@@ -76,6 +78,27 @@ export function UserMenu() {
                 My discussions
               </Link>
 
+              {isAdmin && (
+                <>
+                  <div className="my-1 border-t border-zinc-100 dark:border-zinc-800" />
+                  <Link
+                    href="/admin/queue"
+                    className="block rounded-lg px-4 py-3 text-sm font-medium text-purple-600 hover:bg-zinc-100 dark:text-purple-400 dark:hover:bg-zinc-800"
+                    onClick={() => setOpen(false)}
+                  >
+                    Moderation Queue
+                  </Link>
+                  <Link
+                    href="/admin/appeals"
+                    className="block rounded-lg px-4 py-3 text-sm font-medium text-purple-600 hover:bg-zinc-100 dark:text-purple-400 dark:hover:bg-zinc-800"
+                    onClick={() => setOpen(false)}
+                  >
+                    Ban Appeals
+                  </Link>
+                </>
+              )}
+
+              <div className="my-1 border-t border-zinc-100 dark:border-zinc-800" />
               <button
                 type="button"
                 onClick={handleLogout}
