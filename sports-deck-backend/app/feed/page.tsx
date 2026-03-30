@@ -13,13 +13,14 @@ function teamName(t: TeamField): string {
   return t.name ?? t.shortName ?? t.tla ?? "Unknown";
 }
 
+// 1. 修复类型：添加了 match_update，并将 createdAt 和 author 设为可选
 type FeedItem = {
-  type: "post" | "reply" | "thread" | "match";
+  type: "post" | "reply" | "thread" | "match" | "match_update";
   id: string | number;
   content?: string;
   title?: string;
-  createdAt: string;
-  author?: { id: string; username?: string; avatarUrl?: string };
+  createdAt?: string; 
+  author?: { id?: string; username?: string; avatarUrl?: string };
   thread?: { id: number; title: string };
   match?: {
     id: string;
@@ -31,8 +32,12 @@ type FeedItem = {
   };
 };
 
-function timeAgo(date: string) {
+// 2. 修复时间显示：增加健壮性，处理 NaN 和未定义的时间
+function timeAgo(date?: string) {
+  if (!date) return "recently";
   const diff = Date.now() - new Date(date).getTime();
+  if (isNaN(diff)) return "recently";
+  
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
@@ -42,43 +47,63 @@ function timeAgo(date: string) {
 }
 
 function FeedCard({ item }: { item: FeedItem }) {
-  const isMatch = item.type === "match";
+  // 3. 修复类型判定：兼容后端传来的 match_update
+  const isMatch = item.type === "match" || item.type === "match_update";
   const isThread = item.type === "thread";
+  const displayTime = timeAgo(item.createdAt);
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white/60 p-5 dark:border-zinc-800 dark:bg-zinc-900/60">
       {/* Header */}
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          {item.author?.avatarUrl ? (
-            <img
-              src={item.author.avatarUrl}
-              alt={item.author.username ?? ""}
-              className="h-8 w-8 rounded-full object-cover"
-            />
+          {/* 4. 修复崩溃：如果有真实作者，渲染用户链接；否则渲染系统提示 */}
+          {item.author?.id ? (
+            <>
+              {item.author.avatarUrl ? (
+                <img
+                  src={item.author.avatarUrl}
+                  alt={item.author.username ?? ""}
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 text-sm font-bold text-zinc-500 dark:bg-zinc-700">
+                  {(item.author.username ?? "?")[0].toUpperCase()}
+                </div>
+              )}
+              <div>
+                <Link
+                  href={`/users/${item.author.id}`}
+                  className="text-sm font-semibold hover:underline"
+                >
+                  {item.author.username ?? "Unknown"}
+                </Link>
+                <p className="text-xs text-zinc-400">
+                  {item.type === "post"
+                    ? "posted"
+                    : item.type === "reply"
+                    ? "replied"
+                    : item.type === "thread"
+                    ? "created a thread"
+                    : "match update"}{" "}
+                  · {displayTime}
+                </p>
+              </div>
+            </>
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 text-sm font-bold text-zinc-500 dark:bg-zinc-700">
-              {(item.author?.username ?? "?")[0].toUpperCase()}
-            </div>
+            // 这里是系统消息/比赛更新的 UI，没有可点击的链接，防止出现 Failed to fetch
+            <>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-lg text-green-600 dark:bg-green-900/50">
+                ⚽️
+              </div>
+              <div>
+                <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+                  System Update
+                </span>
+                <p className="text-xs text-zinc-400">match update · {displayTime}</p>
+              </div>
+            </>
           )}
-          <div>
-            <Link
-              href={`/users/${item.author?.id}`}
-              className="text-sm font-semibold hover:underline"
-            >
-              {item.author?.username ?? "Unknown"}
-            </Link>
-            <p className="text-xs text-zinc-400">
-              {item.type === "post"
-                ? "posted"
-                : item.type === "reply"
-                ? "replied"
-                : item.type === "thread"
-                ? "created a thread"
-                : "match update"}{" "}
-              · {timeAgo(item.createdAt)}
-            </p>
-          </div>
         </div>
 
         <span
@@ -90,7 +115,7 @@ function FeedCard({ item }: { item: FeedItem }) {
               : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
           }`}
         >
-          {item.type}
+          {item.type === "match_update" ? "match" : item.type}
         </span>
       </div>
 
@@ -102,7 +127,7 @@ function FeedCard({ item }: { item: FeedItem }) {
         >
           <span className="text-sm font-medium">{teamName(item.match.homeTeam)}</span>
           <span className="text-sm font-bold tabular-nums">
-            {item.match.status === "FINISHED" || item.match.status === "IN_PLAY"
+            {item.match.status === "FINISHED" || item.match.status === "IN_PLAY" || item.match.status === "TIMED"
               ? `${item.match.homeScore ?? 0} – ${item.match.awayScore ?? 0}`
               : "vs"}
           </span>
@@ -151,8 +176,15 @@ function groupFeedItems(items: FeedItem[]) {
       return;
     }
     const prev = items[i - 1];
-    const sameThread =
-      item.thread?.id !== undefined && item.thread.id === prev.thread?.id;
+    
+    // 5. 修复分组逻辑：遇到没有作者的系统消息，强制断开分组，防止组件渲染出错
+    if (!item.author?.id || isSystemType(item.type)) {
+      groups.push(current);
+      current = [item];
+      return;
+    }
+
+    const sameThread = item.thread?.id !== undefined && item.thread.id === prev.thread?.id;
     const sameAuthor = item.author?.id === prev.author?.id;
 
     if (sameThread && sameAuthor && current.length < 3) {
@@ -164,6 +196,10 @@ function groupFeedItems(items: FeedItem[]) {
   });
   if (current.length > 0) groups.push(current);
   return groups;
+}
+
+function isSystemType(type: string) {
+  return type === "match" || type === "match_update";
 }
 
 export default function FeedPage() {
