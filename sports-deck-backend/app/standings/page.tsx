@@ -210,7 +210,8 @@ export default function StandingsPage() {
                       <div className="flex items-center justify-center gap-1">
                         {entry.form
                           ? entry.form
-                              .split(",")
+                              .replace(/,/g, "")
+                              .split("")
                               .slice(-5)
                               .map((r, fi) => (
                                 <FormDot key={fi} result={r} />
