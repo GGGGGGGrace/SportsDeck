@@ -25,7 +25,7 @@ export function Navbar() {
 
   useEffect(() => {
     setIsLoggedIn(Boolean(localStorage.getItem("token")));
-  }, []);
+  }, [pathname]);
 
   const navLinks = isLoggedIn
     ? [...publicLinks, { href: "/feed", label: "Feed" }]
