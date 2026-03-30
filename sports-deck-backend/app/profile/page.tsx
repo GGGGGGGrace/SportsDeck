@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 
 type Team = { id: number; name: string; crest?: string };
@@ -125,11 +126,11 @@ export default function ProfilePage() {
     return <p className="text-red-500">{error || "Could not load profile."}</p>;
 
   const stats = [
-    { label: "Threads", value: profile._count?.threads ?? 0 },
-    { label: "Posts", value: profile._count?.posts ?? 0 },
-    { label: "Replies", value: profile._count?.replies ?? 0 },
-    { label: "Followers", value: profile._count?.followers ?? 0 },
-    { label: "Following", value: profile._count?.following ?? 0 },
+    { label: "Threads", value: profile._count?.threads ?? 0, href: null },
+    { label: "Posts", value: profile._count?.posts ?? 0, href: null },
+    { label: "Replies", value: profile._count?.replies ?? 0, href: null },
+    { label: "Followers", value: profile._count?.followers ?? 0, href: `/users/${profile.id}/followers` },
+    { label: "Following", value: profile._count?.following ?? 0, href: `/users/${profile.id}/following` },
   ];
 
   return (
@@ -167,12 +168,19 @@ export default function ProfilePage() {
 
         {/* Stats */}
         <div className="mt-6 grid grid-cols-5 gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <p className="text-lg font-bold">{stat.value}</p>
-              <p className="text-xs text-zinc-400">{stat.label}</p>
-            </div>
-          ))}
+          {stats.map((stat) =>
+            stat.href ? (
+              <Link key={stat.label} href={stat.href} className="text-center transition hover:opacity-75">
+                <p className="text-lg font-bold">{stat.value}</p>
+                <p className="text-xs text-blue-500 hover:underline">{stat.label}</p>
+              </Link>
+            ) : (
+              <div key={stat.label} className="text-center">
+                <p className="text-lg font-bold">{stat.value}</p>
+                <p className="text-xs text-zinc-400">{stat.label}</p>
+              </div>
+            )
+          )}
         </div>
       </div>
 

@@ -171,6 +171,63 @@ function ReportModal({
 }
 
 /* ------------------------------------------------------------------ */
+/*  FollowButton — inline follow/unfollow for a user                   */
+/* ------------------------------------------------------------------ */
+
+function FollowButton({
+  authorId,
+  currentUserId,
+}: {
+  authorId: string | undefined;
+  currentUserId: string | null;
+}) {
+  const [following, setFollowing] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!authorId || !currentUserId || authorId === currentUserId) return;
+    // Check if already following by fetching their profile
+    apiFetch(`/api/users/${authorId}`)
+      .then((data) => setFollowing(data.isFollowing ?? false))
+      .catch(() => {});
+  }, [authorId, currentUserId]);
+
+  if (!authorId || !currentUserId || authorId === currentUserId) return null;
+  if (following === null) return null; // still loading, show nothing
+
+  async function handleToggle() {
+    setLoading(true);
+    try {
+      if (following) {
+        await apiFetch(`/api/users/${authorId}/follow`, { method: "DELETE", auth: true });
+        setFollowing(false);
+      } else {
+        await apiFetch(`/api/users/${authorId}/follow`, { method: "POST", auth: true });
+        setFollowing(true);
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <button
+      onClick={handleToggle}
+      disabled={loading}
+      className={`rounded-full border px-2 py-0.5 text-xs transition disabled:opacity-50 ${
+        following
+          ? "border-zinc-300 text-zinc-400 hover:border-red-300 hover:text-red-500 dark:border-zinc-700"
+          : "border-blue-300 text-blue-500 hover:bg-blue-50 dark:border-blue-700 dark:hover:bg-blue-900/20"
+      }`}
+    >
+      {loading ? "…" : following ? "Following" : "Follow"}
+    </button>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  ReplyRow                                                            */
 /* ------------------------------------------------------------------ */
 
@@ -298,6 +355,7 @@ function ReplyRow({
         {reply.author?.username && (
           <span className="text-xs text-zinc-500">{reply.author.username}</span>
         )}
+        <FollowButton authorId={reply.author?.id} currentUserId={currentUserId} />
         <button onClick={handleTranslate} disabled={translating} className="text-xs text-blue-400 hover:underline disabled:opacity-50">
           {translating ? "…" : translation ? "Hide" : "Translate"}
         </button>
@@ -511,7 +569,10 @@ export function PostItem({
         )}
 
         {post.author?.username && (
-          <p className="mt-2 text-xs text-zinc-500">by {post.author.username}</p>
+          <div className="mt-2 flex items-center gap-2">
+            <p className="text-xs text-zinc-500">by {post.author.username}</p>
+            <FollowButton authorId={post.author?.id} currentUserId={resolvedUserId} />
+          </div>
         )}
 
         {/* Actions row */}

@@ -26,6 +26,13 @@ export async function GET(request: NextRequest) {
         role: true,
         banned: true,
         createdAt: true,
+        _count: {
+          select: {
+            threads: true,
+            posts: true,
+            replies: true,
+          },
+        },
       },
     });
 
@@ -33,7 +40,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(user);
+    const [followersCount, followingCount] = await Promise.all([
+      prisma.follow.count({ where: { followingId: payload.userId } }),
+      prisma.follow.count({ where: { followerId: payload.userId } }),
+    ]);
+
+    return NextResponse.json({
+      ...user,
+      _count: {
+        ...(user._count ?? {}),
+        followers: followersCount,
+        following: followingCount,
+      },
+    });
   } catch (error) {
     console.error("Profile fetch error:", error);
     return NextResponse.json(
@@ -126,10 +145,29 @@ export async function PUT(request: NextRequest) {
         role: true,
         banned: true,
         createdAt: true,
+        _count: {
+          select: {
+            threads: true,
+            posts: true,
+            replies: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json(updatedUser);
+    const [followersCount, followingCount] = await Promise.all([
+      prisma.follow.count({ where: { followingId: payload.userId } }),
+      prisma.follow.count({ where: { followerId: payload.userId } }),
+    ]);
+
+    return NextResponse.json({
+      ...updatedUser,
+      _count: {
+        ...(updatedUser._count ?? {}),
+        followers: followersCount,
+        following: followingCount,
+      },
+    });
   } catch (error) {
     console.error("Profile update error:", error);
     return NextResponse.json(
