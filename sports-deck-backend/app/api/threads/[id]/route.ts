@@ -68,6 +68,14 @@ export async function GET(
       },
       include: {
         author: true,
+        match: true,
+        polls: {
+          include: {
+            options: {
+              include: { votes: true },
+            },
+          },
+        },
         posts: {
           where: { hidden: false },
           include: {

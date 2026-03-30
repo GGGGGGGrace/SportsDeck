@@ -13,6 +13,7 @@ type UserProfile = {
   avatarUrl?: string;
   favoriteTeam?: string;
   role: string;
+  banned: boolean;
   createdAt: string;
   _count?: {
     threads: number;
@@ -35,6 +36,9 @@ export default function ProfilePage() {
   const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [favoriteTeam, setFavoriteTeam] = useState("");
+  const [appealReason, setAppealReason] = useState("");
+  const [appealLoading, setAppealLoading] = useState(false);
+  const [appealSuccess, setAppealSuccess] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -88,6 +92,25 @@ export default function ProfilePage() {
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleAppeal(e: React.FormEvent) {
+    e.preventDefault();
+    if (!appealReason.trim()) return;
+    setAppealLoading(true);
+    try {
+      await apiFetch("/api/appeals", {
+        method: "POST",
+        auth: true,
+        body: JSON.stringify({ reason: appealReason }),
+      });
+      setAppealSuccess("Your appeal has been submitted. An admin will review it.");
+      setAppealReason("");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setAppealLoading(false);
     }
   }
 
@@ -152,6 +175,43 @@ export default function ProfilePage() {
           ))}
         </div>
       </div>
+
+      {/* Ban status */}
+      {profile.banned && (
+        <div className="rounded-3xl border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-900/20">
+          <h2 className="mb-1 text-lg font-bold text-red-700 dark:text-red-300">
+            Account Suspended
+          </h2>
+          <p className="mb-4 text-sm text-red-600 dark:text-red-400">
+            Your account has been banned. You cannot create threads, posts, or vote in polls.
+            Submit an appeal below to request a review.
+          </p>
+
+          {appealSuccess ? (
+            <p className="text-sm font-medium text-green-600 dark:text-green-400">
+              {appealSuccess}
+            </p>
+          ) : (
+            <form onSubmit={handleAppeal} className="space-y-3">
+              <textarea
+                value={appealReason}
+                onChange={(e) => setAppealReason(e.target.value)}
+                placeholder="Explain why you believe this ban should be lifted..."
+                rows={3}
+                className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-sm transition focus:outline-none dark:border-red-700 dark:bg-zinc-800"
+                required
+              />
+              <button
+                type="submit"
+                disabled={appealLoading}
+                className="rounded-xl bg-red-700 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-red-800 disabled:opacity-50"
+              >
+                {appealLoading ? "Submitting..." : "Submit Appeal"}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
 
       {/* Edit form */}
       <div className="rounded-3xl border border-zinc-200 bg-white/60 p-6 dark:border-zinc-800 dark:bg-zinc-900/60">

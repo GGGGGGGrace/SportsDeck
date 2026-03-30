@@ -113,6 +113,10 @@ model Thread {
   hidden    Boolean  @default(false)
   sentimentLabel String?
   sentimentScore Float?
+  homeTeamSentimentLabel String?
+  homeTeamSentimentScore Float?
+  awayTeamSentimentLabel String?
+  awayTeamSentimentScore Float?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -142,21 +146,44 @@ model Post {
   thread Thread @relation(fields: [threadId], references: [id])
   author User   @relation(fields: [authorId], references: [id])
 
-  replies Reply[]
-  reports Report[]
+  replies  Reply[]
+  reports  Report[]
+  versions PostVersion[]
+}
+
+model PostVersion {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  content   String   @db.Text
+  version   Int
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model Reply {
-  id        Int      @id @default(autoincrement())
-  content   String   @db.Text
-  postId    Int
-  authorId  String   @db.Uuid
-  version   Int      @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  content        String   @db.Text
+  postId         Int
+  authorId       String   @db.Uuid
+  version        Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  translatedText String?
 
-  post   Post @relation(fields: [postId], references: [id])
-  author User @relation(fields: [authorId], references: [id])
+  post     Post          @relation(fields: [postId], references: [id])
+  author   User          @relation(fields: [authorId], references: [id])
+  versions ReplyVersion[]
+}
+
+model ReplyVersion {
+  id        Int      @id @default(autoincrement())
+  replyId   Int
+  content   String   @db.Text
+  version   Int
+  createdAt DateTime @default(now())
+
+  reply Reply @relation(fields: [replyId], references: [id], onDelete: Cascade)
 }
 
 model Tag {

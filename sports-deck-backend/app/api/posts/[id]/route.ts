@@ -133,7 +133,7 @@ export async function PATCH(
 
     const existingPost = await prisma.post.findUnique({
       where: { id: postId },
-      select: { id: true, authorId: true },
+      select: { id: true, authorId: true, content: true, version: true },
     });
 
     if (!existingPost) {
@@ -147,12 +147,21 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Snapshot current content before overwriting
+    await prisma.postVersion.create({
+      data: {
+        postId: existingPost.id,
+        content: existingPost.content,
+        version: existingPost.version,
+      },
+    });
+
     const post = await prisma.post.update({
       where: { id: postId },
       data: {
         content: body.content,
-        version: { increment: 1 }
-      }
+        version: { increment: 1 },
+      },
     });
 
     return NextResponse.json(post);

@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
         avatarUrl: true,
         favoriteTeam: true,
         role: true,
+        banned: true,
         createdAt: true,
       },
     });
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ user });
+    return NextResponse.json(user);
   } catch (error) {
     console.error("Profile fetch error:", error);
     return NextResponse.json(
@@ -123,14 +124,12 @@ export async function PUT(request: NextRequest) {
         avatarUrl: true,
         favoriteTeam: true,
         role: true,
+        banned: true,
         createdAt: true,
       },
     });
 
-    return NextResponse.json({
-      message: "Profile updated successfully",
-      user: updatedUser,
-    });
+    return NextResponse.json(updatedUser);
   } catch (error) {
     console.error("Profile update error:", error);
     return NextResponse.json(
@@ -138,4 +137,8 @@ export async function PUT(request: NextRequest) {
       { status: 503 }
     );
   }
+}
+
+export async function PATCH(request: NextRequest) {
+  return PUT(request);
 }

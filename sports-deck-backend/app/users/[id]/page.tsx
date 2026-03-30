@@ -4,6 +4,7 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 type UserPublic = {
   id: string;
@@ -118,7 +119,7 @@ export default function UserProfilePage({
     setFollowLoading(true);
     try {
       if (following) {
-        await apiFetch(`/api/users/${id}/unfollow`, { method: "POST", auth: true });
+        await apiFetch(`/api/users/${id}/follow`, { method: "DELETE", auth: true });
         setFollowing(false);
         setUser((u) =>
           u
@@ -170,10 +171,10 @@ export default function UserProfilePage({
     return <p className="text-red-500">{error || "User not found."}</p>;
 
   const stats = [
-    { label: "Threads", value: user._count?.threads ?? 0 },
-    { label: "Posts", value: user._count?.posts ?? 0 },
-    { label: "Followers", value: user._count?.followers ?? 0 },
-    { label: "Following", value: user._count?.following ?? 0 },
+    { label: "Threads", value: user._count?.threads ?? 0, href: null },
+    { label: "Posts", value: user._count?.posts ?? 0, href: null },
+    { label: "Followers", value: user._count?.followers ?? 0, href: `/users/${id}/followers` },
+    { label: "Following", value: user._count?.following ?? 0, href: `/users/${id}/following` },
   ];
 
   return (
@@ -226,10 +227,17 @@ export default function UserProfilePage({
         {/* Stats */}
         <div className="mt-5 grid grid-cols-4 gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
           {stats.map((s) => (
-            <div key={s.label} className="text-center">
-              <p className="text-lg font-bold">{s.value}</p>
-              <p className="text-xs text-zinc-400">{s.label}</p>
-            </div>
+            s.href ? (
+              <Link key={s.label} href={s.href} className="text-center hover:opacity-75 transition">
+                <p className="text-lg font-bold">{s.value}</p>
+                <p className="text-xs text-blue-500 hover:underline">{s.label}</p>
+              </Link>
+            ) : (
+              <div key={s.label} className="text-center">
+                <p className="text-lg font-bold">{s.value}</p>
+                <p className="text-xs text-zinc-400">{s.label}</p>
+              </div>
+            )
           ))}
         </div>
       </div>

@@ -25,7 +25,7 @@ export function ReplyInput({
       <input
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="Write a reply..."
+        placeholder="Write a post..."
         className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
       />
 
