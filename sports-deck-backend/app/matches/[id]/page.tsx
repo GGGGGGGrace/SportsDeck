@@ -5,34 +5,33 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 
-type TeamField = string | { id?: number; name?: string; shortName?: string; tla?: string; crest?: string };
+type Team = {
+  id?: number;
+  name: string;
+  shortName?: string;
+  tla?: string;
+  crest?: string;
+};
 
 type Match = {
-  id: string;
-  homeTeam: TeamField;
-  awayTeam: TeamField;
-  homeTeamCrest?: string;
-  awayTeamCrest?: string;
-  homeScore?: number | null;
-  awayScore?: number | null;
-  status: string;
+  id: string | number;
   matchday: number;
-  matchDate: string;
-  venue?: string;
-  stage?: string;
+  stage: string;
+  date: string;
+  status: string;
+  venue?: string | null;
+  homeTeam: Team;
+  awayTeam: Team;
+  score: {
+    fullTime?: { home: number | null; away: number | null } | null;
+    halfTime?: { home: number | null; away: number | null } | null;
+  };
   threads?: { id: number; title: string }[];
 };
 
-function teamName(t: TeamField): string {
+function teamName(t: Team): string {
   if (!t) return "Unknown";
-  if (typeof t === "string") return t;
   return t.name ?? t.shortName ?? t.tla ?? "Unknown";
-}
-
-function teamCrest(t: TeamField, fallback?: string): string | undefined {
-  if (!t) return fallback;
-  if (typeof t === "string") return fallback;
-  return t.crest ?? fallback;
 }
 
 export default function MatchDetailPage({
@@ -77,16 +76,19 @@ export default function MatchDetailPage({
   if (!match) {
     return <p className="py-10 text-center">Match not found.</p>;
   }
-  const date = new Date(match.matchDate);
+
+  const matchDate = new Date(match.date); 
   const isFinished = match.status === "FINISHED";
   const isLive = match.status === "IN_PLAY" || match.status === "PAUSED";
 
   const homeName = teamName(match.homeTeam);
   const awayName = teamName(match.awayTeam);
-  const homeCrest = teamCrest(match.homeTeam, match.homeTeamCrest);
-  const awayCrest = teamCrest(match.awayTeam, match.awayTeamCrest);
+  const homeCrest = match.homeTeam?.crest;
+  const awayCrest = match.awayTeam?.crest;
 
-  // 5. 返回正常的 JSX
+  const homeScore = match.score?.fullTime?.home ?? null;
+  const awayScore = match.score?.fullTime?.away ?? null;
+
   return (
     <div className="space-y-6">
       {/* Back */}
@@ -139,7 +141,7 @@ export default function MatchDetailPage({
           <div className="flex flex-col items-center gap-2 text-center px-4">
             {isFinished || isLive ? (
               <span className="text-5xl font-black tabular-nums tracking-tight">
-                {match.homeScore ?? 0} <span className="text-zinc-300 dark:text-zinc-700 mx-1">-</span> {match.awayScore ?? 0}
+                {homeScore ?? 0} <span className="text-zinc-300 dark:text-zinc-700 mx-1">-</span> {awayScore ?? 0}
               </span>
             ) : (
               <>
@@ -147,14 +149,14 @@ export default function MatchDetailPage({
                   VS
                 </span>
                 <span className="text-sm font-semibold text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full">
-                  {isNaN(date.getTime()) ? "TBD" : date.toLocaleDateString("en-GB", {
+                  {isNaN(matchDate.getTime()) ? "TBD" : matchDate.toLocaleDateString("en-GB", {
                     weekday: "short",
                     day: "numeric",
                     month: "short",
                   })}
                 </span>
                 <span className="text-sm font-medium text-zinc-500">
-                  {isNaN(date.getTime()) ? "" : date.toLocaleTimeString("en-GB", {
+                  {isNaN(matchDate.getTime()) ? "" : matchDate.toLocaleTimeString("en-GB", {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
