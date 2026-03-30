@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { extractBearerToken, verifyAccessToken } from "@/app/lib/auth";
 export const dynamic = 'force-dynamic';
 
 /**
@@ -8,7 +9,7 @@ export const dynamic = 'force-dynamic';
  * favorite team, and lists of threads, posts, and replies.
  */
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -18,35 +19,28 @@ export async function GET(
       where: { id },
       select: {
         id: true,
-        email: true,
         username: true,
         avatarUrl: true,
         favoriteTeam: true,
         createdAt: true,
         threads: {
+          where: { hidden: false },
           orderBy: { createdAt: "desc" },
-          include: {
-            posts: { select: { id: true } },
-            tags: { include: { tag: true } },
-          },
+          select: { id: true, title: true, createdAt: true },
         },
         posts: {
+          where: { hidden: false },
           orderBy: { createdAt: "desc" },
-          include: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
             thread: { select: { id: true, title: true } },
-            replies: { select: { id: true } },
           },
         },
         replies: {
           orderBy: { createdAt: "desc" },
-          include: {
-            post: {
-              select: {
-                id: true,
-                thread: { select: { id: true, title: true } },
-              },
-            },
-          },
+          select: { id: true, content: true, createdAt: true },
         },
       },
     });
@@ -55,22 +49,50 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Count followers and following
+    // Accurate counts via dedicated queries (avoids hidden-post skew)
     const [followersCount, followingCount] = await Promise.all([
       prisma.follow.count({ where: { followingId: id } }),
       prisma.follow.count({ where: { followerId: id } }),
     ]);
 
+    // Optionally determine isFollowing for the logged-in viewer
+    let isFollowing = false;
+    try {
+      const token = extractBearerToken(request);
+      if (token) {
+        const payload = verifyAccessToken(token);
+        if (payload.userId !== id) {
+          const follow = await prisma.follow.findUnique({
+            where: {
+              followerId_followingId: {
+                followerId: payload.userId,
+                followingId: id,
+              },
+            },
+          });
+          isFollowing = !!follow;
+        }
+      }
+    } catch {
+      // unauthenticated visitor — isFollowing stays false
+    }
+
     return NextResponse.json({
       ...user,
-      followersCount,
-      followingCount,
+      isFollowing,
+      _count: {
+        threads: user.threads.length,
+        posts: user.posts.length,
+        replies: user.replies.length,
+        followers: followersCount,
+        following: followingCount,
+      },
     });
   } catch (error) {
     console.error("User profile fetch error:", error);
     return NextResponse.json(
-          { error: "Failed to fetch user profile" },
-          { status: 503 }
+      { error: "Failed to fetch user profile" },
+      { status: 503 }
     );
   }
 }

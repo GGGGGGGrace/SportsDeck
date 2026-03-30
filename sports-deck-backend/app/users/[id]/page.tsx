@@ -89,6 +89,7 @@ export default function UserProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = React.use(params);
+  const router = useRouter();
   const [user, setUser] = useState<UserPublic | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -96,9 +97,11 @@ export default function UserProfilePage({
   const [followLoading, setFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"threads" | "posts" | "replies">("threads");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsLoggedIn(Boolean(localStorage.getItem("token")));
+    setCurrentUserId(localStorage.getItem("userId"));
 
     async function fetchUser() {
       try {
@@ -115,7 +118,10 @@ export default function UserProfilePage({
   }, [id]);
 
   async function handleFollow() {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
     setFollowLoading(true);
     try {
       if (following) {
@@ -209,7 +215,8 @@ export default function UserProfilePage({
             </div>
           </div>
 
-          {isLoggedIn && (
+          {/* Show Follow button to everyone except the profile owner */}
+          {currentUserId !== id && (
             <button
               onClick={handleFollow}
               disabled={followLoading}

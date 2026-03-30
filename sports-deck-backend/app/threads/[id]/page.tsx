@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getThreadById } from "@/lib/threads";
 import { createPost } from "@/lib/posts";
 import { PostItem } from "@/components/posts/PostItem";
@@ -598,7 +599,19 @@ export default function ThreadDetailPage({ params }: { params: Promise<{ id: str
                 <h1 className="text-2xl font-bold">{thread.title}</h1>
               )}
               {thread.author?.username && (
-                <p className="mt-1 text-sm text-zinc-500">by {thread.author.username}</p>
+                <p className="mt-1 text-sm text-zinc-500">
+                  by{" "}
+                  {thread.author.id ? (
+                    <Link
+                      href={`/users/${thread.author.id}`}
+                      className="font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                    >
+                      {thread.author.username}
+                    </Link>
+                  ) : (
+                    thread.author.username
+                  )}
+                </p>
               )}
               {thread.content && (
                 <p className="mt-4 text-zinc-700 dark:text-zinc-300">{thread.content}</p>

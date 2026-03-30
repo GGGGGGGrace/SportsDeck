@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { createReply } from "@/lib/posts";
 import { apiFetch } from "@/lib/api";
 
@@ -184,16 +185,32 @@ function FollowButton({
   const [following, setFollowing] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const isLoggedIn = !!currentUserId;
+
   useEffect(() => {
     if (!authorId || !currentUserId || authorId === currentUserId) return;
-    // Check if already following by fetching their profile
     apiFetch(`/api/users/${authorId}`)
       .then((data) => setFollowing(data.isFollowing ?? false))
       .catch(() => {});
   }, [authorId, currentUserId]);
 
-  if (!authorId || !currentUserId || authorId === currentUserId) return null;
-  if (following === null) return null; // still loading, show nothing
+  // Never show for self
+  if (!authorId || authorId === currentUserId) return null;
+
+  // Visitor: show a Follow button that redirects to login
+  if (!isLoggedIn) {
+    return (
+      <Link
+        href="/login"
+        className="rounded-full border border-blue-300 px-2 py-0.5 text-xs text-blue-500 transition hover:bg-blue-50 dark:border-blue-700 dark:hover:bg-blue-900/20"
+      >
+        Follow
+      </Link>
+    );
+  }
+
+  // Logged in but follow-state not yet loaded
+  if (following === null) return null;
 
   async function handleToggle() {
     setLoading(true);
@@ -353,7 +370,16 @@ function ReplyRow({
 
       <div className="mt-0.5 flex flex-wrap items-center gap-2">
         {reply.author?.username && (
-          <span className="text-xs text-zinc-500">{reply.author.username}</span>
+          reply.author.id ? (
+            <Link
+              href={`/users/${reply.author.id}`}
+              className="text-xs font-medium text-zinc-600 hover:underline dark:text-zinc-400"
+            >
+              {reply.author.username}
+            </Link>
+          ) : (
+            <span className="text-xs text-zinc-500">{reply.author.username}</span>
+          )
         )}
         <FollowButton authorId={reply.author?.id} currentUserId={currentUserId} />
         <button onClick={handleTranslate} disabled={translating} className="text-xs text-blue-400 hover:underline disabled:opacity-50">
@@ -570,7 +596,19 @@ export function PostItem({
 
         {post.author?.username && (
           <div className="mt-2 flex items-center gap-2">
-            <p className="text-xs text-zinc-500">by {post.author.username}</p>
+            <p className="text-xs text-zinc-500">
+              by{" "}
+              {post.author.id ? (
+                <Link
+                  href={`/users/${post.author.id}`}
+                  className="font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                >
+                  {post.author.username}
+                </Link>
+              ) : (
+                post.author.username
+              )}
+            </p>
             <FollowButton authorId={post.author?.id} currentUserId={resolvedUserId} />
           </div>
         )}
