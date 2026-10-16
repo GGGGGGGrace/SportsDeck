@@ -18,7 +18,7 @@ npm ci
 cp .env.example .env.production.local   # fill in the values, never commit it
 set -a; . ./.env.production.local; set +a
 
-npm run db:migrate   # create tables
+npm run db:migrate   # generate the Prisma client and create tables
 npm run db:sync      # import teams and matches from football-data.org
 npm run db:seed      # admin account + demo content
 ```
