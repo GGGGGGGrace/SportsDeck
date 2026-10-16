@@ -30,7 +30,8 @@ export async function PATCH(
 
     const user = await prisma.user.update({
       where: { id },
-      data: { banned: body.banned }
+      data: { banned: body.banned },
+      select: { id: true, email: true, username: true, role: true, banned: true },
     });
 
     return NextResponse.json(user);

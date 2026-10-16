@@ -127,7 +127,7 @@ function FeedCard({ item }: { item: FeedItem }) {
         >
           <span className="text-sm font-medium">{teamName(item.match.homeTeam)}</span>
           <span className="text-sm font-bold tabular-nums">
-            {item.match.status === "FINISHED" || item.match.status === "IN_PLAY" || item.match.status === "TIMED"
+            {item.match.status === "FINISHED" || item.match.status === "IN_PLAY" || item.match.status === "PAUSED"
               ? `${item.match.homeScore ?? 0} – ${item.match.awayScore ?? 0}`
               : "vs"}
           </span>
@@ -198,6 +198,42 @@ function groupFeedItems(items: FeedItem[]) {
   return groups;
 }
 
+// The feed API returns grouped entries ({ type, latestItem, latestTimestamp, ... });
+// flatten each group's latest item into the shape FeedCard renders.
+type FeedGroup = {
+  type: "post" | "reply" | "match_update" | "team_thread";
+  latestTimestamp: string;
+  latestItem: Record<string, any>;
+};
+
+function toFeedItem(group: FeedGroup): FeedItem {
+  const d = group.latestItem ?? {};
+  const createdAt = group.latestTimestamp;
+  switch (group.type) {
+    case "post":
+      return { type: "post", id: d.postId, content: d.content, author: d.author, thread: d.thread, createdAt };
+    case "reply":
+      return { type: "reply", id: d.replyId, content: d.content, author: d.author, thread: d.post?.thread, createdAt };
+    case "team_thread":
+      return { type: "thread", id: d.threadId, title: d.title, author: d.author, createdAt };
+    case "match_update":
+    default:
+      return {
+        type: "match_update",
+        id: d.matchId,
+        createdAt,
+        match: {
+          id: String(d.externalId ?? d.matchId),
+          homeTeam: d.homeTeam,
+          awayTeam: d.awayTeam,
+          homeScore: d.homeScore ?? undefined,
+          awayScore: d.awayScore ?? undefined,
+          status: d.status,
+        },
+      };
+  }
+}
+
 function isSystemType(type: string) {
   return type === "match" || type === "match_update";
 }
@@ -217,7 +253,7 @@ export default function FeedPage() {
 
     apiFetch("/api/users/feed", { auth: true })
       .then((data) => {
-        setItems(Array.isArray(data) ? data : (data.items ?? data.feed ?? []));
+        setItems((data?.feed ?? []).map(toFeedItem));
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));

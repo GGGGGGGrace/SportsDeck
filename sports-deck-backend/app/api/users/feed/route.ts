@@ -100,6 +100,7 @@ export async function GET(request: NextRequest) {
         where: {
           createdAt: { gte: since },
           authorId: { in: followedIds },
+          hidden: false,
         },
         include: {
           author: { select: { id: true, username: true, avatarUrl: true } },
@@ -178,6 +179,7 @@ export async function GET(request: NextRequest) {
           timestamp: match.updatedAt,
           data: {
             matchId: match.id,
+            externalId: match.externalId,
             homeTeam: match.homeTeam,
             awayTeam: match.awayTeam,
             homeTeamCrest: match.homeTeamCrest,

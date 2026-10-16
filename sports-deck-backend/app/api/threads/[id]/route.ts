@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
+import { prisma, publicUserSelect } from "@/app/lib/prisma";
 import { authenticate } from "@/app/lib/auth";
 
 export async function PATCH(
@@ -67,7 +67,7 @@ export async function GET(
         id: threadId,
       },
       include: {
-        author: true,
+        author: { select: publicUserSelect },
         match: true,
         polls: {
           include: {
@@ -79,10 +79,10 @@ export async function GET(
         posts: {
           where: { hidden: false },
           include: {
-            author: true,
+            author: { select: publicUserSelect },
             replies: {
               include: {
-                author: true,
+                author: { select: publicUserSelect },
               },
             },
           },
@@ -90,7 +90,7 @@ export async function GET(
       },
     });
 
-    if (!thread) {
+    if (!thread || thread.hidden) {
       return NextResponse.json({ error: "Thread not found" }, { status: 404 });
     }
 

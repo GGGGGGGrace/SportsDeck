@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
+import { prisma, publicUserSelect } from "@/app/lib/prisma";
 import { authenticate, ensureNotBanned } from "@/app/lib/auth";
 
 export async function GET() {
@@ -25,10 +25,10 @@ export async function GET() {
             hidden: false,
           },
           include: {
-            author: true,
+            author: { select: publicUserSelect },
             replies: {
               include: {
-                author: true,
+                author: { select: publicUserSelect },
               },
             },
           },

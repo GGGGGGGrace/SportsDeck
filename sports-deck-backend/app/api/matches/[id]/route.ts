@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMatch, formatMatchResponse } from "@/app/lib/footballApi";
+import { prisma } from "@/app/lib/prisma";
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,12 @@ export async function GET(
     }
 
     const match = await getMatch(matchId);
-    return NextResponse.json(formatMatchResponse(match));
+    const threads = await prisma.thread.findMany({
+      where: { hidden: false, match: { externalId: matchId } },
+      select: { id: true, title: true },
+      orderBy: { createdAt: "asc" },
+    });
+    return NextResponse.json({ ...formatMatchResponse(match), threads });
   } catch (error) {
     console.error("Error fetching match:", error);
 
