@@ -13,7 +13,9 @@ import { PrismaClient } from "@/app/generated/prisma/client";
 
 const connectionString = process.env.DATABASE_URL;
 
-if (!connectionString) {
+// `next build` imports route modules to collect page data; don't require
+// database credentials at build time, only when the server actually runs.
+if (!connectionString && process.env.NEXT_PHASE !== "phase-production-build") {
   throw new Error("DATABASE_URL is not defined in .env");
 }
 

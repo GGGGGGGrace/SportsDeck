@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "prisma migrate deploy",
+    "db:sync": "tsx prisma/syncFootballData.ts",
+    "db:seed": "prisma db seed"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.4.2",
