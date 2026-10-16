@@ -22,3 +22,11 @@ const adapter = new PrismaPg(pool as any);
 
 export const prisma = new PrismaClient({ adapter });
 
+
+// Fields that are safe to expose when embedding a user in public responses.
+export const publicUserSelect = {
+  id: true,
+  username: true,
+  avatarUrl: true,
+  favoriteTeam: true,
+} as const;

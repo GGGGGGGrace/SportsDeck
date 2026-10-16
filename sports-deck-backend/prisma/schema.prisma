@@ -19,7 +19,11 @@ enum UserRole {
 enum MatchStatus {
   SCHEDULED
   TIMED
+  IN_PLAY
+  PAUSED
   FINISHED
+  SUSPENDED
+  AWARDED
   POSTPONED
   CANCELLED
 }
@@ -143,7 +147,7 @@ model Post {
   aiModerationReason String? @db.Text
   translatedText    String?
 
-  thread Thread @relation(fields: [threadId], references: [id])
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
   author User   @relation(fields: [authorId], references: [id])
 
   replies  Reply[]
@@ -171,7 +175,7 @@ model Reply {
   updatedAt      DateTime @updatedAt
   translatedText String?
 
-  post     Post          @relation(fields: [postId], references: [id])
+  post     Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
   author   User          @relation(fields: [authorId], references: [id])
   versions ReplyVersion[]
 }
@@ -197,7 +201,7 @@ model ThreadTag {
   threadId Int
   tagId    Int
 
-  thread Thread @relation(fields: [threadId], references: [id])
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
   tag    Tag    @relation(fields: [tagId], references: [id])
 
   @@id([threadId, tagId])
@@ -209,7 +213,7 @@ model Poll {
   question String
   deadline DateTime
 
-  thread  Thread       @relation(fields: [threadId], references: [id])
+  thread  Thread       @relation(fields: [threadId], references: [id], onDelete: Cascade)
   options PollOption[]
 }
 
@@ -218,7 +222,7 @@ model PollOption {
   pollId Int
   text   String
 
-  poll  Poll       @relation(fields: [pollId], references: [id])
+  poll  Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
   votes PollVote[]
 }
 
@@ -227,7 +231,7 @@ model PollVote {
   optionId Int
   userId   String @db.Uuid
 
-  option PollOption @relation(fields: [optionId], references: [id])
+  option PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
 }
 
 model Report {

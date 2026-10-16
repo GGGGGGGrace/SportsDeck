@@ -2,7 +2,7 @@ import { prisma } from "./prisma";
 import { MatchStatus } from "@/app/generated/prisma/client";
 import Redis from 'ioredis';
 
-export const redis = new Redis('redis://redis:6379');
+export const redis = new Redis(process.env.REDIS_URL || 'redis://redis:6379', { lazyConnect: true });
 
 const FOOTBALL_API_BASE = "https://api.football-data.org/v4";
 const COMPETITION_CODE = "PL"; // Premier League
@@ -329,8 +329,9 @@ function formatScore(match: FdMatch): string | null {
 }
 
 async function syncMatchesToDb(matches: FdMatch[]): Promise<void> {
-  const adminUser = await prisma.user.findUnique({
-    where: { username: "defaultadmin" }
+  const adminUser = await prisma.user.findFirst({
+    where: { role: "ADMIN" },
+    orderBy: { createdAt: "asc" },
   });
 
   const now = new Date();

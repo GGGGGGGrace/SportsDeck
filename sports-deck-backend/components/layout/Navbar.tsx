@@ -27,6 +27,7 @@ export function Navbar() {
 
   useEffect(() => {
     setIsLoggedIn(Boolean(localStorage.getItem("token")));
+    setIsAdmin(localStorage.getItem("role") === "ADMIN");
   }, [pathname]);
   const navLinks = isLoggedIn
     ? [

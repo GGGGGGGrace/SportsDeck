@@ -11,6 +11,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { email, password } = body;
+    const username =
+      typeof body.username === "string" && body.username.trim()
+        ? body.username.trim()
+        : null;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -39,6 +43,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (username) {
+      const existingUsername = await prisma.user.findUnique({
+        where: { username },
+      });
+      if (existingUsername) {
+        return NextResponse.json(
+          { error: "Username already taken" },
+          { status: 409 }
+        );
+      }
+    }
+
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -46,6 +62,7 @@ export async function POST(request: NextRequest) {
       data: {
         email,
         password: hashedPassword,
+        username,
         role: "USER",
       },
     });
@@ -54,6 +71,7 @@ export async function POST(request: NextRequest) {
     const tokenPayload: TokenPayload = {
       userId: user.id,
       email: user.email,
+      username: user.username,
       role: user.role,
     };
 

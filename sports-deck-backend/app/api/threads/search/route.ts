@@ -1,7 +1,7 @@
 
 export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
+import { prisma, publicUserSelect } from "@/app/lib/prisma";
 
 export async function GET(req: Request) {
   try {
@@ -23,6 +23,7 @@ export async function GET(req: Request) {
                 {
                   title: {
                     contains: q,
+                    mode: "insensitive",
                   },
                 },
                 {
@@ -30,6 +31,7 @@ export async function GET(req: Request) {
                     is: {
                       username: {
                         contains: q,
+                        mode: "insensitive",
                       },
                     },
                   },
@@ -40,6 +42,7 @@ export async function GET(req: Request) {
                       tag: {
                         name: {
                           contains: q,
+                          mode: "insensitive",
                         },
                       },
                     },
@@ -52,6 +55,7 @@ export async function GET(req: Request) {
         ...(title && {
           title: {
             contains: title,
+            mode: "insensitive",
           },
         }),
 
@@ -60,6 +64,7 @@ export async function GET(req: Request) {
             is: {
               username: {
                 contains: author,
+                mode: "insensitive",
               },
             },
           },
@@ -71,6 +76,7 @@ export async function GET(req: Request) {
               tag: {
                 name: {
                   contains: tag,
+                  mode: "insensitive",
                 },
               },
             },
@@ -83,7 +89,7 @@ export async function GET(req: Request) {
       },
 
       include: {
-        author: true,
+        author: { select: publicUserSelect },
         tags: {
           include: {
             tag: true,
@@ -94,10 +100,10 @@ export async function GET(req: Request) {
             hidden: false,
           },
           include: {
-            author: true,
+            author: { select: publicUserSelect },
             replies: {
               include: {
-                author: true,
+                author: { select: publicUserSelect },
               },
             },
           },

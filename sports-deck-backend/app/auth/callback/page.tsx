@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { saveSession } from "@/lib/auth";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -25,8 +26,7 @@ export default function AuthCallbackPage() {
         
         if (!res.ok) throw new Error(data.error || "OAuth failed");
 
-        localStorage.setItem("token", data.accessToken);
-        localStorage.setItem("refreshToken", data.refreshToken);
+        saveSession(data);
         
         router.push("/");
       } catch (error) {

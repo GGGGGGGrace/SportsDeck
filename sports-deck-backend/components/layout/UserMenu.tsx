@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { clearSession } from "@/lib/auth";
 
 export function UserMenu() {
   const [open, setOpen] = useState(false);
@@ -9,11 +11,13 @@ export function UserMenu() {
   const [isAdmin, setIsAdmin] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  const pathname = usePathname();
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(Boolean(token));
     setIsAdmin(localStorage.getItem("role") === "ADMIN");
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -41,8 +45,7 @@ export function UserMenu() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
+    clearSession();
     setIsLoggedIn(false);
     setOpen(false);
     window.location.href = "/";

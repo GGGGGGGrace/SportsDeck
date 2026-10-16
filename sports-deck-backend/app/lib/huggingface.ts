@@ -1,10 +1,9 @@
-const HF_TOKEN = process.env.HF_TOKEN;
-
-if (!HF_TOKEN) {
-  throw new Error("HF_TOKEN is not set");
-}
-
 async function callHuggingFace(model: string, inputs: unknown) {
+  const HF_TOKEN = process.env.HF_TOKEN;
+  if (!HF_TOKEN) {
+    throw new Error("HF_TOKEN is not set");
+  }
+
   const url = `https://router.huggingface.co/hf-inference/models/${model}`;
 
   for (let i = 0; i < 3; i++) {
