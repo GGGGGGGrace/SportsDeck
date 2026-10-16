@@ -2,7 +2,7 @@
 
 **A community discussion platform for Premier League football — live fixtures, standings, match threads, polls, and AI-assisted moderation.**
 
-🔗 **Live demo:** [your-app.vercel.app](https://your-app.vercel.app) <!-- replace with your Vercel URL -->
+🔗 **Live demo:** [sports-deck-two.vercel.app/](https://sports-deck-two.vercel.app/) <!-- replace with your Vercel URL -->
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
@@ -222,9 +222,7 @@ Built by Group 19 for CSC309 at the University of Toronto:
 
 <!-- Names taken from the git history; edit names and add GitHub links as you like -->
 - Zhiyuan Wu
-- yanshui  <!-- full name -->
 - Jinchi Xie
-- Mohtashim Ali
 
 ## Acknowledgements
 
